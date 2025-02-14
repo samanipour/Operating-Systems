@@ -1,4 +1,4 @@
-# A Closer Look at Processes and Resource Utilization
+# Lab 7: A Closer Look at Processes and Resource Utilization
 
 ---
 

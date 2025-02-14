@@ -1,4 +1,4 @@
-# Lab-2 Manual: Devices
+# Lab-2: Devices
 
 ## 1. Introduction to Devices in Linux
 

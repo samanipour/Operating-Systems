@@ -1,4 +1,4 @@
-# Understanding Your Network and Its Configuration
+# Lab-8: Understanding Your Network and Its Configuration
 
 ---
 

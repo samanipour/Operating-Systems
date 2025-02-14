@@ -1,4 +1,4 @@
-# System Configuration: Logging, System Time, Batch Jobs, and Users
+# Lab-6: System Configuration: Logging, System Time, Batch Jobs, and Users
 
 ---
 

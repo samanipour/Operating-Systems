@@ -1,4 +1,4 @@
-# Introduction to Shell Scripts
+# Lab-10: Introduction to Shell Scripts
 
 ---
 

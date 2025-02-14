@@ -1,4 +1,4 @@
-# How the Linux Kernel Boots
+# Lab-4: How the Linux Kernel Boots
 
 ## 1. Introduction
 

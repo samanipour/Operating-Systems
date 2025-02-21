@@ -1,4 +1,5 @@
-# Lab-1: Basic Commands and Directory Hierarchy
+# Lab-1: Getting Started With Linux 
+![img](./assets/LinuxVsWindowsVsMacMeme.jpg)
 
 ## 1. Introduction to the Shell
 

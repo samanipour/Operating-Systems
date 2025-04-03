@@ -46,8 +46,69 @@
 ---
 
 ## 3. sysfs Device Path
+### 3.1 What is sysfs?
+- **Virtual File System:**
+  Sysfs is not a traditional file system stored on a physical disk. Instead, it's a RAM-based file system generated dynamically by the kernel.   
 
-### 3.1 Viewing sysfs Information
+- **Kernel Interface:**
+  It exposes information about the kernel's internal data structures, particularly those related to hardware devices and drivers.   
+
+- **Hierarchical Structure:**
+  Sysfs presents this information in a hierarchical directory structure, making it easy for user-space programs to access and interact with kernel data.   
+
+- **Sysfs Paths:**
+  - Location:
+    Sysfs is typically mounted at /sys. Therefore, all sysfs paths begin with /sys/.
+  - Purpose:
+    These paths represent various kernel objects, devices, and drivers. By navigating through the directories and files within /sys/, you can:
+    - Obtain information about hardware devices (e.g., their attributes, capabilities, and status).   
+    - Configure certain device parameters.  
+    - Monitor kernel activity.
+
+- **Key Directories:**
+  - /sys/devices/: This is a primary location where devices that are found by the kernel are represented. Within this directory you will find subdirectories that represent the hardware bus structure of the computer.   
+  - /sys/class/: This directory organizes devices by their function or class (e.g., network devices, block devices, input devices). 
+  - /sys/bus/: This directory organizes devices by the bus they are connected to (e.g., PCI, USB).
+  - /sys/kernel/: This directory contains information and configuration options related to the kernel itself.
+
+- **In essence:**
+  - Sysfs paths provide a standardized way for user-space applications to communicate with the kernel and access hardware-related information.   
+  - The hierarchical nature of sysfs makes it relatively easy to navigate and find the information you need.
+### 3.2 sysfs Path Examples
+
+1. `/sys/class/block/sda/size`
+
+    - `/sys/class/block/`: This directory contains information about block devices (like hard drives or SSDs).
+
+    - `sda/`: This subdirectory represents a specific block device, in this case, the first SCSI disk (or a disk emulated as SCSI). The device name might vary (e.g., nvme0n1 for an NVMe drive).
+
+    - `size`: This file within the sda directory contains the size of the block device, expressed in 512-byte sectors. Reading this file will give you the disk's capacity.This path provides information about the size of a block device.
+
+2. `/sys/class/net/eth0/address`
+
+    - `/sys/class/net/`: This directory holds information about network interfaces.
+    - `eth0/`: This subdirectory represents the first Ethernet interface. Again, the interface name can change (e.g., wlan0 for a Wi-Fi interface).
+    - `address`: This file contains the MAC address of the network interface.
+    This path provides the mac address of a network interface.
+
+3. `/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq`
+    
+    - `/sys/devices/system/cpu/cpu0/`: This leads to information about the first CPU core (CPU 0).
+    - `cpufreq/`: This subdirectory contains files related to CPU frequency scaling.
+    - `scaling_cur_freq`: This file shows the current operating frequency of the CPU core.
+    This path shows the current cpu frequency.
+
+4. `/sys/bus/pci/devices/0000:00:14.0/vendor`
+    - `/sys/bus/pci/devices/`: This directory contains information about PCI devices.
+    - `0000:00:14.0/`: This subdirectory represents a specific PCI device, identified by its bus, device, and function numbers.
+    - `vendor`: This file contains the vendor ID of the PCI device. This path provides the vendor ID of a PCI device.
+
+Key things to remember:
+  - Sysfs is dynamic: The contents of /sys/ can change depending on the hardware and drivers present in the system.
+  - Files as information: In sysfs, files are often used to represent device attributes. Reading a file gives you the attribute's value, and sometimes writing to a file allows you to change the attribute.
+  - Hierarchical organization: The directory structure helps organize the vast amount of information exposed by the kernel.
+
+### 3.3 Viewing sysfs Information
 - **Objective**: Use `sysfs` to view detailed device attributes.
 - **Commands**:
   - Display a device's `sysfs` path:
@@ -62,14 +123,6 @@
     ```bash
     ls -l /sys/class/block/sda
     ```
-
-### 3.2 Understanding sysfs Paths
-- `sysfs` organizes devices by their hardware attributes under `/sys/devices`.
-- Example:
-  ```
-  /sys/devices/pci0000:00/0000:00:17.0/ata3/host0/target0:0:0/0:0:0:0/block/sda
-  ```
-
 ---
 
 ## 4. dd and Devices

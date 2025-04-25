@@ -1,239 +1,257 @@
-# Lab-8: Understanding Your Network and Its Configuration
-
----
+# Lab-5: How User Space Starts
 
 ## 1. Introduction
 
 ### 1.1 Overview
-- This manual explains the fundamentals of Linux networking, including:
-  - Viewing network configuration
-  - Managing IP addresses
-  - Configuring routing
-  - Understanding network layers
-  - Using basic network diagnostic tools
-- By the end of this lab, students will be able to analyze and configure Linux network interfaces and troubleshoot network connectivity.
+- User space starts after the kernel initializes the system and starts the first user-space process, `init`.
+- The startup sequence is roughly:
+  1. `init` process starts.
+  2. Essential low-level services (e.g., `udevd`, `syslogd`) initialize.
+  3. Network configuration occurs.
+  4. Mid- and high-level services (e.g., `cron`, printing) start.
+  5. Login prompts, GUIs, and high-level applications initialize.
 
 ---
 
-## 2. Network Basics
+## 2. Identifying Your `init`
 
-### 2.1 Checking Network Interfaces
-- **Objective**: List all active and inactive network interfaces.
+### 2.1 Checking the `init` System
+- **Objective**: Identify the `init` system in use.
 - **Commands**:
-  - Using `ip`:
+  - Check the `init` process:
     ```bash
-    ip link show
+    ps -p 1 -o comm=
     ```
-  - Using `ifconfig` (older systems):
+  - Alternatively, use:
     ```bash
-    ifconfig -a
+    systemctl
     ```
-  - Using `nmcli` (for NetworkManager systems):
-    ```bash
-    nmcli device status
-    ```
+    If the output shows `systemd`, then the system is using systemd.
 
-### 2.2 Viewing Interface Details
-- **Objective**: Display detailed information about network interfaces.
-- **Commands**:
-  ```bash
-  ip addr show
-  ip -s link show
-  ```
-  - Example output:
-    ```
-    2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
-        link/ether 08:00:27:4e:7a:1b brd ff:ff:ff:ff:ff:ff
-        inet 192.168.1.100/24 brd 192.168.1.255 scope global dynamic enp0s3
-           valid_lft 86394sec preferred_lft 86394sec
-    ```
+- **Notes**:
+  - Most modern Linux distributions use `systemd`.
+  - Older systems may use System V (`sysvinit`) or Upstart.
 
 ---
 
-## 3. IP Addresses
+## 3. systemd
 
-### 3.1 Viewing IP Addresses
-- **Objective**: Display the IP address configuration of all interfaces.
+### 3.1 Overview
+- `systemd` is the standard `init` system on most modern Linux distributions.
+- It manages services and system initialization using units.
+
+### 3.2 Units and Unit Types
+- **Objective**: Understand systemd units.
+- **Types of Units**:
+  - **Service Units** (`.service`): Start, stop, and manage services.
+  - **Target Units** (`.target`): Group services to achieve a system state.
+  - **Mount Units** (`.mount`): Control filesystem mounting.
+  - **Timer Units** (`.timer`): Schedule tasks.
+
+### 3.3 Viewing Units and Status
+- **Objective**: List and check the status of systemd units.
 - **Commands**:
-  ```bash
-  ip addr show
-  ```
-  - Or, using the older method:
+  - List all units:
     ```bash
-    ifconfig
+    systemctl list-units
     ```
-
-### 3.2 Adding an IP Address
-- **Objective**: Assign a new IP address to an interface.
-- **Commands**:
-  ```bash
-  sudo ip addr add 192.168.1.10/24 dev enp0s3
-  ```
-
-### 3.3 Deleting an IP Address
-- **Objective**: Remove an assigned IP address.
-- **Commands**:
-  ```bash
-  sudo ip addr del 192.168.1.10/24 dev enp0s3
-  ```
-
-### 3.4 Enabling and Disabling Interfaces
-- **Objective**: Bring an interface up or down.
-- **Commands**:
-  - Bring up the interface:
+  - List failed units:
     ```bash
-    sudo ip link set enp0s3 up
+    systemctl --failed
     ```
-  - Bring down the interface:
+  - Check the status of a specific unit:
     ```bash
-    sudo ip link set enp0s3 down
+    systemctl status <unit_name>
     ```
 
----
-
-## 4. Subnets and Routing
-
-### 4.1 Understanding Subnets
-- **Explanation**:
-  - Subnet masks define the network and host portions of an IP address.
-  - Example:
-    - IP Address: `192.168.1.10`
-    - Subnet Mask: `255.255.255.0` or `/24`
-    - Network Address: `192.168.1.0`
-
-### 4.2 Viewing the Routing Table
-- **Objective**: Display the current routing table.
+### 3.4 Managing Units
+- **Objective**: Start, stop, enable, and disable units.
 - **Commands**:
-  ```bash
-  ip route show
-  ```
-  - Or:
+  - Start a service:
     ```bash
-    route -n
+    sudo systemctl start <service_name>
     ```
-
-### 4.3 Adding a Route
-- **Objective**: Add a new route to a network.
-- **Commands**:
-  ```bash
-  sudo ip route add 192.168.2.0/24 via 192.168.1.1 dev enp0s3
-  ```
-
-### 4.4 Deleting a Route
-- **Objective**: Remove an existing route.
-- **Commands**:
-  ```bash
-  sudo ip route del 192.168.2.0/24
-  ```
-
-### 4.5 Setting the Default Gateway
-- **Objective**: Configure the default gateway.
-- **Commands**:
-  ```bash
-  sudo ip route add default via 192.168.1.1 dev enp0s3
-  ```
-
----
-
-## 5. IPv6 Configuration
-
-### 5.1 Viewing IPv6 Addresses
-- **Objective**: Display IPv6 configuration.
-- **Commands**:
-  ```bash
-  ip -6 addr show
-  ```
-
-### 5.2 Adding an IPv6 Address
-- **Objective**: Assign an IPv6 address to an interface.
-- **Commands**:
-  ```bash
-  sudo ip -6 addr add 2001:db8::1/64 dev enp0s3
-  ```
-
-### 5.3 Enabling IPv6 Forwarding
-- **Objective**: Allow IPv6 traffic forwarding.
-- **Commands**:
-  ```bash
-  sudo sysctl -w net.ipv6.conf.all.forwarding=1
-  ```
-
----
-
-## 6. Basic ICMP and DNS Tools
-
-### 6.1 Testing Connectivity with ping
-- **Objective**: Check connectivity to a host.
-- **Commands**:
-  - IPv4:
+  - Stop a service:
     ```bash
-    ping 8.8.8.8
+    sudo systemctl stop <service_name>
     ```
-  - IPv6:
+  - Enable a service to start at boot:
     ```bash
-    ping6 google.com
+    sudo systemctl enable <service_name>
     ```
-
-### 6.2 Checking DNS Resolution
-- **Objective**: Verify DNS name resolution.
-- **Commands**:
-  ```bash
-  host google.com
-  nslookup google.com
-  dig google.com
-  ```
-
----
-
-## 7. Network Interface Configuration
-
-### 7.1 Manually Configuring Interfaces
-- **Objective**: Configure network interfaces manually.
-- **Commands**:
-  - Edit the configuration file:
+  - Disable a service:
     ```bash
-    sudo nano /etc/network/interfaces
+    sudo systemctl disable <service_name>
     ```
-  - Example configuration:
-    ```
-    auto enp0s3
-    iface enp0s3 inet static
-        address 192.168.1.50
-        netmask 255.255.255.0
-        gateway 192.168.1.1
-    ```
-  - Restart the network service:
+  - Restart a service:
     ```bash
-    sudo systemctl restart networking
-    ```
-
-### 7.2 Adding and Deleting Routes
-- **Objective**: Manage static routes manually.
-- **Commands**:
-  - Add a route:
-    ```bash
-    sudo route add -net 10.0.0.0/24 gw 192.168.1.1 dev enp0s3
-    ```
-  - Delete a route:
-    ```bash
-    sudo route del -net 10.0.0.0/24 dev enp0s3
+    sudo systemctl restart <service_name>
     ```
 
 ---
 
-## 8. Practical Exercises
+## 4. systemd Configuration
 
-### Exercise 1: Basic IP Configuration
-1. View the current IP configuration using `ip addr show`.
-2. Add a new IP address to an interface.
-3. Test connectivity with `ping`.
+### 4.1 Viewing Configuration Files
+- **Objective**: Locate and view systemd configuration files.
+- **Locations**:
+  - System units: `/lib/systemd/system/`
+  - Custom units: `/etc/systemd/system/`
+- **Commands**:
+  - View a unit file:
+    ```bash
+    cat /lib/systemd/system/<unit_name>.service
+    ```
+  - Check unit dependencies:
+    ```bash
+    systemctl list-dependencies <unit_name>
+    ```
 
-### Exercise 2: Static Routing
-1. View the current routing table.
-2. Add a new route to a different network.
-3. Verify the route using `traceroute`.
+### 4.2 Editing and Reloading Configuration
+- **Objective**: Edit unit files and apply changes.
+- **Steps**:
+  1. Edit a unit file:
+      ```bash
+      sudo nano /etc/systemd/system/<unit_name>.service
+      ```
+  2. Save changes and reload systemd:
+      ```bash
+      sudo systemctl daemon-reload
+      ```
+  3. Restart the service:
+      ```bash
+      sudo systemctl restart <unit_name>
+      ```
 
-### Exercise 3: DNS Resolution
-1. Test DNS resolution using `nslookup`.
-2. Change the DNS server in `/etc/resolv.conf`.
-3. Verify with `dig`.
+---
+
+## 5. System V Runlevels and systemd Targets
+
+### 5.1 Runlevels in System V
+- **Objective**: Understand traditional System V runlevels.
+- **Runlevels**:
+  - `0`: Halt (shuts down the system)
+  - `1`: Single-user mode (rescue mode)
+  - `3`: Multi-user mode (no GUI)
+  - `5`: Multi-user mode with GUI
+  - `6`: Reboot
+- **Command**:
+  ```bash
+  who -r
+  ```
+
+### 5.2 systemd Targets
+- **Objective**: Map runlevels to systemd targets.
+- **Target Equivalents**:
+  - `runlevel 0` → `poweroff.target`
+  - `runlevel 1` → `rescue.target`
+  - `runlevel 3` → `multi-user.target`
+  - `runlevel 5` → `graphical.target`
+  - `runlevel 6` → `reboot.target`
+- **Commands**:
+  - Change to a target:
+    ```bash
+    sudo systemctl isolate <target>
+    ```
+  - Set the default target:
+    ```bash
+    sudo systemctl set-default <target>
+    ```
+  - View the default target:
+    ```bash
+    systemctl get-default
+    ```
+
+---
+
+## 6. Shutting Down and Restarting
+
+### 6.1 systemd Commands
+- **Objective**: Shutdown and restart the system.
+- **Commands**:
+  - Shut down immediately:
+    ```bash
+    sudo systemctl poweroff
+    ```
+  - Reboot immediately:
+    ```bash
+    sudo systemctl reboot
+    ```
+  - Schedule a shutdown:
+    ```bash
+    sudo shutdown -h 10 "System maintenance"
+    ```
+    (Shutdown in 10 minutes with a message)
+
+---
+
+## 7. The Initial RAM Filesystem (initramfs)
+
+### 7.1 Overview
+- **Objective**: Understand initramfs.
+- `initramfs` is a temporary root filesystem loaded into memory during boot.
+- It preloads drivers and modules needed to mount the real root filesystem.
+
+### 7.2 Viewing initramfs Contents
+- **Commands**:
+  - Locate the initramfs image:
+    ```bash
+    ls /boot/initramfs-*.img
+    ```
+  - Unpack the image (using `unmkinitramfs` or `lsinitrd`):
+    ```bash
+    lsinitrd /boot/initramfs-<version>.img
+    ```
+
+### 7.3 Rebuilding initramfs
+- **Objective**: Rebuild the initramfs image after modifying drivers or kernel modules.
+- **Commands**:
+  - For Debian/Ubuntu:
+    ```bash
+    sudo update-initramfs -u
+    ```
+  - For Red Hat/CentOS:
+    ```bash
+    sudo dracut -f
+    ```
+
+---
+
+## 8. Emergency Booting and Single-User Mode
+
+### 8.1 Single-User Mode
+- **Objective**: Boot into a minimal rescue environment.
+- **Steps**:
+  1. Reboot the system and access the GRUB menu.
+  2. Edit the boot entry by pressing `e`.
+  3. Append `systemd.unit=rescue.target` to the `linux` line.
+  4. Press `Ctrl+X` to boot.
+
+### 8.2 Emergency Mode
+- **Objective**: Boot into a minimal environment for critical repair.
+- **Steps**:
+  1. Access the GRUB menu.
+  2. Edit the boot entry and add:
+      ```
+      systemd.unit=emergency.target
+      ```
+  3. Boot with `Ctrl+X`.
+
+---
+
+## 9. Practical Exercises
+
+### Exercise 1: Managing systemd Units
+1. List all active units using:
+    ```bash
+    systemctl list-units
+    ```
+2. Stop and disable a service, then enable and start it.
+
+### Exercise 2: Switching Targets
+1. Check the current target.
+2. Switch to `multi-user.target` and back to `graphical.target`.
+
+### Exercise 3: Rebuilding initramfs
+1. Rebuild the initramfs image.
+2. Reboot and verify the changes.

@@ -1,252 +1,270 @@
-# Lab-9: Network Applications and Services
+# Lab-6: System Configuration: Logging, System Time, Batch Jobs, and Users
 
 ---
 
-## 1. Introduction
+## 1. System Logging
 
-### 1.1 Overview
-- This manual explains the configuration and management of network applications and services in Linux.
-- By the end of this lab, students will be able to:
-  - Understand the basics of network services.
-  - Configure network servers such as SSH.
-  - Use diagnostic tools to troubleshoot network issues.
-  - Understand network security and sockets.
+### 1.1 Checking Your Log Setup
+- **Objective**: Inspect the system’s logging setup.
+- **Commands**:
+  - Check if `journald` is active:
+    ```bash
+    journalctl
+    ```
+  - Check for `rsyslogd`:
+    ```bash
+    ps aux | grep rsyslogd
+    ls /etc/rsyslog.conf
+    ```
+  - Check for `syslog-ng`:
+    ```bash
+    ls /etc/syslog-ng
+    ```
+  - View logs in `/var/log`:
+    ```bash
+    ls /var/log
+    ```
 
----
+### 1.2 Searching and Monitoring Logs
+- **Objective**: Search and monitor log messages.
+- **Commands**:
+  - View all logs:
+    ```bash
+    journalctl
+    ```
+  - Search by process ID:
+    ```bash
+    journalctl _PID=<pid>
+    ```
+  - Filter logs by time:
+    ```bash
+    journalctl -S -4h
+    journalctl -S '2020-01-14 14:30:00'
+    ```
+  - Monitor logs in real-time:
+    ```bash
+    journalctl -f
+    ```
 
-## 2. The Basics of Services
-
-### 2.1 Understanding TCP Services
-- **Objective**: Explore how TCP services work using telnet.
+### 1.3 Logfile Rotation
+- **Objective**: Manage logfiles using log rotation.
 - **Explanation**:
-  - TCP services provide uninterrupted two-way data streams.
-  - HTTP (Hypertext Transfer Protocol) uses TCP port 80 for communication.
-
-### 2.2 Using `telnet` to Connect to a Web Server
-- **Objective**: Manually connect to a web server using TCP.
+  - `logrotate` rotates logfiles to prevent them from consuming too much storage.
+  - Example of rotated files:
+    ```
+    auth.log -> auth.log.1 -> auth.log.2.gz -> auth.log.3.gz
+    ```
 - **Commands**:
-  ```bash
-  telnet example.org 80
-  ```
+  - Force log rotation:
+    ```bash
+    sudo logrotate -f /etc/logrotate.conf
+    ```
+  - Check the log rotation status:
+    ```bash
+    sudo logrotate -d /etc/logrotate.conf
+    ```
+
+### 1.4 Journal Maintenance
+- **Objective**: Manage systemd journal logs.
+- **Commands**:
+  - View journal size:
+    ```bash
+    journalctl --disk-usage
+    ```
+  - Clear journal logs older than 7 days:
+    ```bash
+    sudo journalctl --vacuum-time=7d
+    ```
+  - Limit the journal size:
+    ```bash
+    sudo journalctl --vacuum-size=100M
+    ```
+
+---
+
+## 2. The Structure of /etc
+
+### 2.1 Understanding /etc Directory
+- **Objective**: Explore the `/etc` directory structure.
+- **Explanation**:
+  - `/etc`: Contains system configuration files.
+  - Subdirectories organize configuration files for different services.
+  - Example:
+    ```bash
+    ls -F /etc
+    ```
+    This lists all directories and files in `/etc`, where most items are now subdirectories.
+
+### 2.2 Customizing Configuration
+- **Objective**: Customize system configuration.
 - **Steps**:
-  1. Open a terminal.
-  2. Connect to the IANA example web server on TCP port 80:
-      ```bash
-      telnet example.org 80
-      ```
-  3. Once connected, type the following:
-      ```
-      GET / HTTP/1.1
-      Host: example.org
-      ```
-      (Press ENTER twice)
-  4. Observe the HTML response from the server.
-  5. Terminate the connection:
-      - Press `CTRL+D`
-
----
-
-## 3. A Closer Look with `curl`
-
-### 3.1 Using `curl` to Communicate with HTTP Servers
-- **Objective**: Examine HTTP communication using `curl`.
-- **Commands**:
-  ```bash
-  curl --trace-ascii trace_file http://www.example.org/
-  ```
-- **Steps**:
-  1. Install `curl` if not already installed:
-      ```bash
-      sudo apt install curl
-      ```
-  2. Send a request to the web server:
-      ```bash
-      curl --trace-ascii trace_file http://www.example.org/
-      ```
-  3. Open the trace file to view the request and response:
-      ```bash
-      cat trace_file
-      ```
-  4. Observe the request headers and server response.
-
----
-
-## 4. Network Servers
-
-### 4.1 Secure Shell (SSH)
-
-#### 4.1.1 Installing and Enabling SSH Server
-- **Objective**: Install and enable OpenSSH server.
-- **Commands**:
-  - Install SSH server:
+  1. Locate the configuration file, e.g., `/etc/systemd/system`.
+  2. Edit using a text editor:
     ```bash
-    sudo apt install openssh-server
+    sudo nano /etc/systemd/system/example.service
     ```
-  - Enable and start the SSH service:
+  3. Save changes and reload systemd:
     ```bash
-    sudo systemctl enable ssh
-    sudo systemctl start ssh
-    ```
-  - Verify the SSH service status:
-    ```bash
-    sudo systemctl status ssh
-    ```
-
-#### 4.1.2 Configuring SSH Server
-- **Objective**: Modify SSH server settings for secure access.
-- **Steps**:
-  1. Edit the SSH configuration file:
-      ```bash
-      sudo nano /etc/ssh/sshd_config
-      ```
-  2. Recommended settings:
-      - Disable root login:
-        ```
-        PermitRootLogin no
-        ```
-      - Specify allowed users:
-        ```
-        AllowUsers username
-        ```
-  3. Save and close the file.
-  4. Restart SSH to apply changes:
-      ```bash
-      sudo systemctl restart ssh
-      ```
-
-#### 4.1.3 Connecting to SSH Server
-- **Objective**: Connect to the SSH server using the client.
-- **Commands**:
-  ```bash
-  ssh username@hostname
-  ```
-- **Example**:
-  ```bash
-  ssh user@example.org
-  ```
-
-### 4.2 Using `fail2ban` for SSH Security
-- **Objective**: Protect SSH server from brute-force attacks.
-- **Commands**:
-  - Install fail2ban:
-    ```bash
-    sudo apt install fail2ban
-    ```
-  - Enable and start fail2ban:
-    ```bash
-    sudo systemctl enable fail2ban
-    sudo systemctl start fail2ban
-    ```
-  - View fail2ban status:
-    ```bash
-    sudo fail2ban-client status
-    ```
-  - View SSH jail status:
-    ```bash
-    sudo fail2ban-client status sshd
+    sudo systemctl daemon-reload
     ```
 
 ---
 
-## 5. Diagnostic Tools
+## 3. User Management Files
 
-### 5.1 Using `lsof` to List Open Files and Ports
-- **Objective**: List open network ports and connections.
+### 3.1 The /etc/passwd File
+- **Objective**: Understand and manage user information.
+- **Explanation**:
+  - `/etc/passwd` maps usernames to user IDs (UIDs).
+  - Format:
+    ```
+    username:x:UID:GID:Full Name:Home Directory:Shell
+    ```
 - **Commands**:
-  - List all open ports:
+  - View the `/etc/passwd` file:
     ```bash
-    sudo lsof -i
-    ```
-  - List open ports for a specific service:
-    ```bash
-    sudo lsof -i :22
-    ```
-
-### 5.2 Using `tcpdump` for Packet Analysis
-- **Objective**: Capture and analyze network packets.
-- **Commands**:
-  - Install `tcpdump`:
-    ```bash
-    sudo apt install tcpdump
-    ```
-  - Capture packets on a network interface:
-    ```bash
-    sudo tcpdump -i enp0s3
-    ```
-  - Capture packets on a specific port:
-    ```bash
-    sudo tcpdump -i enp0s3 port 80
+    cat /etc/passwd
     ```
 
-### 5.3 Using `netcat` for Network Connections
-- **Objective**: Create network connections and send data.
+### 3.2 The /etc/shadow File
+- **Objective**: Manage user passwords.
+- **Explanation**:
+  - `/etc/shadow` stores encrypted user passwords.
+  - Only accessible by the root user for security.
 - **Commands**:
-  - Start a listener on a port:
+  - View the `/etc/shadow` file:
     ```bash
-    nc -l 1234
-    ```
-  - Connect to the listener:
-    ```bash
-    nc <host-ip> 1234
+    sudo cat /etc/shadow
     ```
 
-### 5.4 Port Scanning with `nmap`
-- **Objective**: Scan a network for open ports.
+### 3.3 Manipulating Users and Passwords
+- **Objective**: Add, modify, and delete users.
 - **Commands**:
-  - Install `nmap`:
+  - Add a new user:
     ```bash
-    sudo apt install nmap
+    sudo adduser username
     ```
-  - Scan a host for open ports:
+  - Delete a user:
     ```bash
-    nmap <host-ip>
+    sudo deluser username
     ```
-  - Perform a detailed scan:
+  - Change a user’s password:
     ```bash
-    nmap -A <host-ip>
+    sudo passwd username
+    ```
+
+### 3.4 Working with Groups
+- **Objective**: Manage user groups.
+- **Commands**:
+  - List groups:
+    ```bash
+    cat /etc/group
+    ```
+  - Add a group:
+    ```bash
+    sudo groupadd groupname
+    ```
+  - Add a user to a group:
+    ```bash
+    sudo usermod -aG groupname username
     ```
 
 ---
 
-## 6. Network Security
+## 4. Setting the Time
 
-### 6.1 Identifying Vulnerabilities
-- **Objective**: Identify common network vulnerabilities.
-- **Types of Vulnerabilities**:
-  - Direct attacks (e.g., buffer overflow).
-  - Cleartext password sniffing.
-  - Unauthenticated services.
-
-### 6.2 Securing Network Services
-- **Objective**: Harden network services against attacks.
-- **Best Practices**:
-  - Disable unnecessary services:
+### 4.1 Setting Time Zone
+- **Objective**: Configure the system time zone.
+- **Commands**:
+  - List available time zones:
     ```bash
-    sudo systemctl disable service_name
+    timedatectl list-timezones
     ```
-  - Use SSH instead of Telnet.
-  - Apply firewall rules:
+  - Set the time zone:
     ```bash
-    sudo ufw enable
-    sudo ufw allow ssh
-    sudo ufw deny telnet
+    sudo timedatectl set-timezone Region/City
+    ```
+  - Verify the current time and time zone:
+    ```bash
+    timedatectl
+    ```
+
+### 4.2 Synchronizing Time with NTP
+- **Objective**: Sync time using NTP (Network Time Protocol).
+- **Commands**:
+  - Enable and start systemd-timesyncd:
+    ```bash
+    sudo systemctl enable systemd-timesyncd
+    sudo systemctl start systemd-timesyncd
+    ```
+  - Check synchronization status:
+    ```bash
+    timedatectl status
     ```
 
 ---
 
-## 7. Practical Exercises
+## 5. Scheduling Tasks
 
-### Exercise 1: Connecting to a Web Server
-1. Connect to a web server using `telnet`.
-2. Send a GET request manually.
-3. Observe the server response.
+### 5.1 Scheduling Recurring Tasks with cron
+- **Objective**: Automate tasks using cron jobs.
+- **Commands**:
+  - Edit crontab:
+    ```bash
+    crontab -e
+    ```
+  - List current cron jobs:
+    ```bash
+    crontab -l
+    ```
+  - Example cron entry (runs daily at 9:15 AM):
+    ```
+    15 09 * * * /path/to/command
+    ```
 
-### Exercise 2: Configuring and Using SSH
-1. Install and enable OpenSSH server.
-2. Secure the SSH server by disabling root login.
-3. Connect to the SSH server from another machine.
+### 5.2 Scheduling with systemd Timer Units
+- **Objective**: Schedule tasks with systemd timers.
+- **Commands**:
+  - Create a timer unit:
+    ```bash
+    sudo nano /etc/systemd/system/example.timer
+    ```
+    Example configuration:
+    ```
+    [Unit]
+    Description=Example Timer
 
-### Exercise 3: Using Diagnostic Tools
-1. Monitor open ports with `lsof`.
-2. Capture network packets using `tcpdump`.
-3. Perform a network scan with `nmap`.
+    [Timer]
+    OnCalendar=*-*-* *:00
+    Persistent=true
+
+    [Install]
+    WantedBy=timers.target
+    ```
+  - Enable and start the timer:
+    ```bash
+    sudo systemctl enable example.timer
+    sudo systemctl start example.timer
+    ```
+  - Check timer status:
+    ```bash
+    systemctl list-timers
+    ```
+
+---
+
+## 6. Practical Exercises
+
+### Exercise 1: Managing Logs
+1. Check system logs using `journalctl`.
+2. Rotate logs manually using `logrotate`.
+3. Clear old logs using `journalctl --vacuum-time`.
+
+### Exercise 2: User and Group Management
+1. Create a new user and set a password.
+2. Add the user to a new group.
+3. Verify the user’s group memberships.
+
+### Exercise 3: Scheduling Tasks
+1. Schedule a cron job to display a message every hour.
+2. Create a systemd timer that runs a script daily.

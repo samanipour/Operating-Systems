@@ -1,248 +1,262 @@
-# Lab-10: Introduction to Shell Scripts
+# Lab 7: A Closer Look at Processes and Resource Utilization
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Overview
-- A shell script is a series of commands written in a file that the shell executes as if they were typed into a terminal.
-- Shell scripts automate repetitive tasks, simplify complex commands, and facilitate system administration.
-- The Bourne shell (`/bin/sh`) is the standard shell, but most Linux distributions use an enhanced version called **bash**.
-
-### 1.2 Objectives
-- Learn the basics of writing and running shell scripts.
-- Understand quoting, variables, conditionals, loops, and subshells.
-- Master common shell utilities like `basename`, `awk`, and `sed`.
+- In Linux, processes compete for system resources such as CPU, memory, and I/O.
+- The kernel manages resource allocation to maintain system stability and performance.
+- This manual covers:
+  - Tracking processes
+  - Viewing open files
+  - Tracing program execution
+  - Monitoring resource utilization
+  - Managing control groups (cgroups)
 
 ---
 
-## 2. Shell Script Basics
+## 2. Tracking Processes
 
-### 2.1 Creating a Shell Script
-- **Objective**: Create a basic shell script.
-- **Steps**:
-  1. Open a text editor (e.g., `nano` or `vim`).
-  2. Start the script with the shebang line:
-      ```sh
-      #!/bin/sh
-      ```
-      - This indicates that `/bin/sh` will interpret the script.
-  3. Write the script:
-      ```sh
-      #!/bin/sh
-      echo "Hello, World!"
-      ls
-      ```
-  4. Save the file as `hello.sh`.
-
-### 2.2 Making the Script Executable
-- **Objective**: Set the executable permission.
-- **Command**:
-  ```bash
-  chmod +x hello.sh
-  ```
-- **Explanation**:
-  - `chmod +x` adds the executable permission.
-  - If you don’t want others to read or execute the script, use:
-    ```bash
-    chmod 700 hello.sh
-    ```
-
-### 2.3 Running the Script
-- **Objective**: Execute the shell script.
+### 2.1 Using `ps` to List Processes
+- **Objective**: View running processes and their details.
 - **Commands**:
-  - If the script is in the current directory:
+  - List all running processes:
     ```bash
-    ./hello.sh
+    ps -ef
     ```
-  - If the script is in a directory in the PATH:
+  - View a tree of processes:
     ```bash
-    hello.sh
+    ps -e --forest
     ```
-  - Using the full path:
+  - Display detailed information:
     ```bash
-    /home/user/scripts/hello.sh
+    ps aux
+    ```
+
+### 2.2 Monitoring Processes with `top`
+- **Objective**: Monitor real-time system performance and resource usage.
+- **Commands**:
+  - Start the `top` interface:
+    ```bash
+    top
+    ```
+  - Useful shortcuts:
+    - `P`: Sort by CPU usage
+    - `M`: Sort by memory usage
+    - `T`: Sort by running time
+    - `k`: Kill a process
+    - `q`: Quit `top`
+
+### 2.3 Advanced Monitoring with `htop`
+- **Objective**: Use an enhanced version of `top` with a user-friendly interface.
+- **Commands**:
+  - Install `htop`:
+    ```bash
+    sudo apt install htop
+    ```
+  - Launch `htop`:
+    ```bash
+    htop
+    ```
+  - Navigate using arrow keys, and use `F9` to kill processes.
+
+---
+
+## 3. Finding Open Files with `lsof`
+
+### 3.1 Viewing Open Files
+- **Objective**: List all open files by processes.
+- **Commands**:
+  - List all open files:
+    ```bash
+    sudo lsof
+    ```
+  - View files opened by a specific user:
+    ```bash
+    sudo lsof -u username
+    ```
+  - View files opened by a specific process:
+    ```bash
+    sudo lsof -p PID
+    ```
+  - Display open network connections:
+    ```bash
+    sudo lsof -i
+    ```
+
+### 3.2 Monitoring File Access in Real-Time
+- **Objective**: Monitor file access activity.
+- **Commands**:
+  - Monitor access to a file or directory:
+    ```bash
+    sudo watch -n 1 'lsof /path/to/directory'
     ```
 
 ---
 
-## 3. Quoting and Literals
+## 4. Tracing Program Execution and System Calls
 
-### 3.1 Understanding Quotes
-- **Objective**: Learn when to use quotes.
-- **Types of Quotes**:
-  - **Single Quotes** (`'`): Preserve literal value (no variable expansion).
-    ```sh
-    echo '$HOME'  # Output: $HOME
+### 4.1 Using `strace` to Trace System Calls
+- **Objective**: Trace system calls made by a program.
+- **Commands**:
+  - Trace a program's system calls:
+    ```bash
+    strace -o output.txt -e trace=all ./program_name
     ```
-  - **Double Quotes** (`"`): Allow variable expansion.
-    ```sh
-    echo "$HOME"  # Output: /home/username
+  - Trace a running process by PID:
+    ```bash
+    sudo strace -p PID
     ```
-  - **Backslash** (`\`): Escape a single character.
-    ```sh
-    echo "He said, \"Hello!\""
-    ```
-  - **No Quotes**: Words are split at spaces and tabs.
-    ```sh
-    echo $HOME
+  - Display network-related system calls:
+    ```bash
+    sudo strace -e trace=network ./program_name
     ```
 
-### 3.2 Special Cases
-- **Escape a Single Quote**:
-  - Using double quotes:
-    ```sh
-    echo "It's a beautiful day!"
+### 4.2 Using `ltrace` to Trace Library Calls
+- **Objective**: Trace library calls made by a program.
+- **Commands**:
+  - Trace library function calls:
+    ```bash
+    ltrace ./program_name
     ```
-  - Using backslash:
-    ```sh
-    echo 'It'\''s a beautiful day!'
+  - Log the output to a file:
+    ```bash
+    ltrace -o ltrace_output.txt ./program_name
     ```
 
 ---
 
-## 4. Special Variables
+## 5. Threads
 
-### 4.1 Using Script Arguments
-- **Objective**: Access arguments passed to the script.
-- **Special Variables**:
-  - `$1`, `$2`, ... : Individual arguments.
-  - `$#`: Number of arguments.
-  - `$@`: All arguments.
-  - `$0`: Script name.
-- **Example**:
-  ```sh
-  #!/bin/sh
-  echo "Script name: $0"
-  echo "First argument: $1"
-  echo "All arguments: $@"
-  echo "Number of arguments: $#"
-  ```
-- **Running the Script**:
-  ```bash
-  ./script.sh one two three
-  ```
-- **Output**:
-  ```
-  Script name: ./script.sh
-  First argument: one
-  All arguments: one two three
-  Number of arguments: 3
-  ```
-
-### 4.2 Exit Codes
-- **Objective**: Understand exit codes.
+### 5.1 Understanding Threads
+- **Objective**: Identify single-threaded and multithreaded processes.
 - **Explanation**:
-  - `$?`: Holds the exit code of the last executed command.
-  - `0`: Success.
-  - Non-zero: Error.
-- **Example**:
-  ```sh
-  ls /not_exist_dir
-  echo "Exit code: $?"
-  ```
+  - **Single-threaded**: One execution flow per process.
+  - **Multithreaded**: Multiple execution flows within a single process.
+
+### 5.2 Viewing Threads with `ps` and `top`
+- **Commands**:
+  - Display threads with `ps`:
+    ```bash
+    ps -eLf
+    ```
+  - Show threads in `top`:
+    - Press `H` in the `top` interface.
 
 ---
 
-## 5. Conditionals
+## 6. Monitoring Resource Utilization
 
-### 5.1 Using `if` Statements
-- **Objective**: Execute commands conditionally.
-- **Syntax**:
-  ```sh
-  if [ condition ]; then
-    # commands if true
-  else
-    # commands if false
-  fi
-  ```
-- **Example**:
-  ```sh
-  #!/bin/sh
-  if [ -f "$1" ]; then
-    echo "File exists."
-  else
-    echo "File does not exist."
-  fi
-  ```
+### 6.1 Monitoring CPU Usage
+- **Objective**: Check CPU utilization.
+- **Commands**:
+  - Using `top` or `htop`.
+  - Using `mpstat` (from the `sysstat` package):
+    ```bash
+    sudo apt install sysstat
+    mpstat -P ALL 2
+    ```
+
+### 6.2 Monitoring Memory Usage
+- **Objective**: View memory usage statistics.
+- **Commands**:
+  - Using `free`:
+    ```bash
+    free -h
+    ```
+  - Using `vmstat`:
+    ```bash
+    vmstat 2
+    ```
+
+### 6.3 Monitoring Disk Usage
+- **Objective**: Check disk space and I/O performance.
+- **Commands**:
+  - Check disk space:
+    ```bash
+    df -h
+    ```
+  - Monitor disk I/O:
+    ```bash
+    iostat -xz 2
+    ```
+
+### 6.4 Monitoring Network Usage
+- **Objective**: Monitor network traffic and connections.
+- **Commands**:
+  - Using `ss`:
+    ```bash
+    ss -tunap
+    ```
+  - Using `iftop` (must be installed):
+    ```bash
+    sudo apt install iftop
+    sudo iftop
+    ```
+
+---
+
+## 7. Control Groups (cgroups)
+
+### 7.1 Overview
+- **Objective**: Manage resource allocation using cgroups.
 - **Explanation**:
-  - `-f`: Checks if the file exists.
+  - **cgroups** limit and isolate resource usage for processes.
+  - Versions:
+    - **cgroup v1**: Hierarchical resource management.
+    - **cgroup v2**: Unified resource management.
 
-### 5.2 Using `case` Statements
-- **Objective**: Match a variable against patterns.
-- **Syntax**:
-  ```sh
-  case $1 in
-    start) echo "Starting...";;
-    stop) echo "Stopping...";;
-    *) echo "Unknown command.";;
-  esac
-  ```
+### 7.2 Viewing cgroups
+- **Commands**:
+  - List all cgroups:
+    ```bash
+    cat /proc/cgroups
+    ```
+  - Display a process’s cgroup membership:
+    ```bash
+    cat /proc/<PID>/cgroup
+    ```
 
----
+### 7.3 Creating and Managing cgroups
+- **Objective**: Create and manage cgroups manually.
+- **Commands**:
+  - Create a cgroup:
+    ```bash
+    sudo cgcreate -g cpu,memory:/my_cgroup
+    ```
+  - Limit CPU usage:
+    ```bash
+    sudo cgset -r cpu.shares=512 my_cgroup
+    ```
+  - Add a process to the cgroup:
+    ```bash
+    sudo cgclassify -g cpu,memory:/my_cgroup <PID>
+    ```
 
-## 6. Loops
-
-### 6.1 `for` Loops
-- **Objective**: Iterate over a list of items.
-- **Syntax**:
-  ```sh
-  for var in item1 item2 item3; do
-    echo $var
-  done
-  ```
-- **Example**:
-  ```sh
-  for file in *.txt; do
-    echo "Processing $file..."
-  done
-  ```
-
-### 6.2 `while` Loops
-- **Objective**: Repeat commands while a condition is true.
-- **Syntax**:
-  ```sh
-  while [ condition ]; do
-    # commands
-  done
-  ```
-- **Example**:
-  ```sh
-  i=1
-  while [ $i -le 5 ]; do
-    echo "Count: $i"
-    i=$((i+1))
-  done
-  ```
-
----
-
-## 7. Command Substitution
-
-### 7.1 Using Command Output in Scripts
-- **Objective**: Capture the output of a command.
-- **Syntax**:
-  ```sh
-  var=$(command)
-  ```
-- **Example**:
-  ```sh
-  DATE=$(date)
-  echo "Today is $DATE"
-  ```
+### 7.4 Viewing Resource Utilization in cgroups
+- **Commands**:
+  - Check CPU usage:
+    ```bash
+    cat /sys/fs/cgroup/cpu/my_cgroup/cpuacct.usage
+    ```
+  - Check memory usage:
+    ```bash
+    cat /sys/fs/cgroup/memory/my_cgroup/memory.usage_in_bytes
+    ```
 
 ---
 
 ## 8. Practical Exercises
 
-### Exercise 1: Writing and Running a Script
-1. Create a script that prints the current date and lists all files in the home directory.
-2. Make the script executable and run it.
+### Exercise 1: Monitoring Processes
+1. Use `ps`, `top`, and `htop` to monitor system processes.
+2. Sort by CPU and memory usage.
 
-### Exercise 2: Using Conditionals and Loops
-1. Write a script that checks if a file exists.
-2. If the file exists, print its contents line by line using a `while` loop.
+### Exercise 2: Using lsof and strace
+1. List open files by a specific user with `lsof`.
+2. Trace system calls of a program using `strace`.
 
-### Exercise 3: Command Substitution and Variables
-1. Write a script that captures the output of the `df -h` command.
-2. Display the disk usage for each mounted filesystem.
+### Exercise 3: Creating and Managing cgroups
+1. Create a cgroup to limit CPU usage.
+2. Add a process to the cgroup and monitor its resource usage.

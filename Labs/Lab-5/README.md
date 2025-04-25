@@ -2,13 +2,13 @@
 
 No matter what your goals are when using Linux, becoming familiar with how its filesystem works is a fundamental skill. Linux organizes data using a hierarchy of directories, and mastering this layout along with file management is essential for effective use.
 
----
-
 ## Understanding the Filesystem
 
 Most newcomers to Linux have experience with other systems like Windows. One challenge when transitioning is adapting to how Linux structures and accesses files, which differs significantly from platforms like Windows.
 
 For instance, in Windows, storage devices are typically assigned letters like `C:` or `D:` and appear under "My Computer." Linux doesn’t assign drive letters. Instead, all storage—whether local, networked, or removable—appears under a unified root structure.
+
+![img](./assets/Part%20of%20a%20Linux%20filesystem.png)
 
 The topmost directory in Linux is the **root**, represented by `/`. This symbol is also used to separate folder and file names in paths. Think of a file path like a set of directions. For example:
 
@@ -103,6 +103,8 @@ Linux supports two path types:
 
 ### Example 1: Using an Absolute Path
 
+![img](./assets/Using%20a%20pathname,%20example%201.png)
+
 If you're in `/home/julia` and want to go to `/usr/bin`:
 
 ```bash
@@ -118,6 +120,8 @@ pwd
 Or just look at your prompt if it's configured to show the path.
 
 ### Example 2: Using a Relative Path
+
+![img](./assets/Using%20a%20pathname,%20example%202.png)
 
 To go from `/home/julia` to `/usr/bin`, you could do this instead:
 
@@ -174,6 +178,8 @@ These files store personal configurations for your shell, applications, or deskt
 ### Viewing File Details
 
 To get more information about each file, use the `-l` option:
+
+![img](./assets/Details%20of%20the%20ls%20-l%20command.png)
 
 ```bash
 ls -l
@@ -372,6 +378,18 @@ This command reads from `input.txt`, converts lowercase letters to uppercase usi
 
 ## Using Pipes to Chain Commands
 
+This process, called piping, is useful when you work in a command-line environment.
+Understanding it might be a bit difficult if this is your first exposure, so a couple of diagrams
+might be helpful.
+
+### The ls -l command without piping
+
+![img](./assets/The%20ls%20-l%20command%20without%20piping.png)
+
+### The ls -l command with piping
+
+![img](./assets/The%20ls%20-l%20command%20with%20piping.png)
+
 The `|` (pipe) symbol lets you take the output of one command and feed it directly into another:
 
 ```bash
@@ -383,6 +401,8 @@ This runs `ls -l /etc`, then passes the result to `more`, which displays one pag
 Pipes are useful for filtering or paging through output from commands that produce a lot of text.
 
 > 📌 Note: Redirection affects only standard output (`stdout`). Error messages (`stderr`) are still printed to the screen unless you explicitly redirect them.
+
+
 
 # Exercise Tasks 
 ## 🧭 Understanding the Filesystem

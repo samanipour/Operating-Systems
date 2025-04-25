@@ -2,6 +2,17 @@
 
 No matter what your goals are when using Linux, becoming familiar with how its filesystem works is a fundamental skill. Linux organizes data using a hierarchy of directories, and mastering this layout along with file management is essential for effective use.
 
+## ✅ What you will learn
+
+- [Understanding the Filesystem](#understanding-the-filesystem)
+- [Most Commonly Used Directories](#most-commonly-used-directories)
+- [Naming Rules and Best Practices](#naming-rules-and-best-practices)
+- [Moving Through the Filesystem](#moving-through-the-filesystem)
+- [Working with the Filesystem](#working-with-the-filesystem)
+- [Creating and Removing Directories](#creating-and-removing-directories)
+- [Managing Files](#managing-files)
+- [Redirecting Output](#redirecting-output)
+
 ## Understanding the Filesystem
 
 Most newcomers to Linux have experience with other systems like Windows. One challenge when transitioning is adapting to how Linux structures and accesses files, which differs significantly from platforms like Windows.

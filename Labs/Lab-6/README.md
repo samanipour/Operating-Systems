@@ -649,7 +649,6 @@ Example:
 ```bash
 grep -i 'error' logfile.txt
 ```
-Awesome! Here are **practice exercises for each section** of Chapter 4: *Essential Commands* based on the paraphrased content.
 
 ### Searching for Files with grep
 The find and locate commands are useful for finding files by name, but they can’t find files based on the contents of a file. The grep command can search all files within a directory structure recursively if you use the -r option.
@@ -661,9 +660,6 @@ for an example that searches for all bash shell scripts in the /etc directory st
 ```bash
 grep -rl '^#!/bin/bash' /etc/* 2> /dev/null
 ```
-
-Here’s a **comprehensive challenge question** that tests students’ ability to use **all major commands** from the lab—including file viewing, searching, comparing, permissions, compression, redirection, and piping—without requiring shell scripting knowledge:
-
 ---
 
 ### 🧠 Exercise: Investigate, Analyze, and Report**

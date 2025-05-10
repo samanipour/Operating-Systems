@@ -440,11 +440,11 @@ chmod 754 filename
 ```
 With octal permissions, you should always provide three numbers, which will change all the permissions. But what if you only want to change a single permission of the set? For that, use the symbolic method by passing three values to the chmod command as shown in Table
 
-|Who| What| Permission|
+|Who| What| Description|
 |---|---|---|
-u = user owner| +| r|
-g = group owner| −| w|
-o = other| =| x|
+u = user owner| +| Add Permission|
+g = group owner| −| Remove Permission|
+o = other| =| Set Exact Permission|
 a = all sets|
 
 The following demonstrates adding execute permission to all three sets (user owner, group

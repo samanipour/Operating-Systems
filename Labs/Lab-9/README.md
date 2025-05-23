@@ -1,270 +1,257 @@
-# Lab-6: System Configuration: Logging, System Time, Batch Jobs, and Users
+# Lab-5: How User Space Starts
+
+## 1. Introduction
+
+### 1.1 Overview
+- User space starts after the kernel initializes the system and starts the first user-space process, `init`.
+- The startup sequence is roughly:
+  1. `init` process starts.
+  2. Essential low-level services (e.g., `udevd`, `syslogd`) initialize.
+  3. Network configuration occurs.
+  4. Mid- and high-level services (e.g., `cron`, printing) start.
+  5. Login prompts, GUIs, and high-level applications initialize.
 
 ---
 
-## 1. System Logging
+## 2. Identifying Your `init`
 
-### 1.1 Checking Your Log Setup
-- **Objective**: Inspect the system’s logging setup.
+### 2.1 Checking the `init` System
+- **Objective**: Identify the `init` system in use.
 - **Commands**:
-  - Check if `journald` is active:
+  - Check the `init` process:
     ```bash
-    journalctl
+    ps -p 1 -o comm=
     ```
-  - Check for `rsyslogd`:
+  - Alternatively, use:
     ```bash
-    ps aux | grep rsyslogd
-    ls /etc/rsyslog.conf
+    systemctl
     ```
-  - Check for `syslog-ng`:
-    ```bash
-    ls /etc/syslog-ng
-    ```
-  - View logs in `/var/log`:
-    ```bash
-    ls /var/log
-    ```
+    If the output shows `systemd`, then the system is using systemd.
 
-### 1.2 Searching and Monitoring Logs
-- **Objective**: Search and monitor log messages.
-- **Commands**:
-  - View all logs:
-    ```bash
-    journalctl
-    ```
-  - Search by process ID:
-    ```bash
-    journalctl _PID=<pid>
-    ```
-  - Filter logs by time:
-    ```bash
-    journalctl -S -4h
-    journalctl -S '2020-01-14 14:30:00'
-    ```
-  - Monitor logs in real-time:
-    ```bash
-    journalctl -f
-    ```
+- **Notes**:
+  - Most modern Linux distributions use `systemd`.
+  - Older systems may use System V (`sysvinit`) or Upstart.
 
-### 1.3 Logfile Rotation
-- **Objective**: Manage logfiles using log rotation.
-- **Explanation**:
-  - `logrotate` rotates logfiles to prevent them from consuming too much storage.
-  - Example of rotated files:
-    ```
-    auth.log -> auth.log.1 -> auth.log.2.gz -> auth.log.3.gz
-    ```
+---
+
+## 3. systemd
+
+### 3.1 Overview
+- `systemd` is the standard `init` system on most modern Linux distributions.
+- It manages services and system initialization using units.
+
+### 3.2 Units and Unit Types
+- **Objective**: Understand systemd units.
+- **Types of Units**:
+  - **Service Units** (`.service`): Start, stop, and manage services.
+  - **Target Units** (`.target`): Group services to achieve a system state.
+  - **Mount Units** (`.mount`): Control filesystem mounting.
+  - **Timer Units** (`.timer`): Schedule tasks.
+
+### 3.3 Viewing Units and Status
+- **Objective**: List and check the status of systemd units.
 - **Commands**:
-  - Force log rotation:
+  - List all units:
     ```bash
-    sudo logrotate -f /etc/logrotate.conf
+    systemctl list-units
     ```
-  - Check the log rotation status:
+  - List failed units:
     ```bash
-    sudo logrotate -d /etc/logrotate.conf
+    systemctl --failed
+    ```
+  - Check the status of a specific unit:
+    ```bash
+    systemctl status <unit_name>
     ```
 
-### 1.4 Journal Maintenance
-- **Objective**: Manage systemd journal logs.
+### 3.4 Managing Units
+- **Objective**: Start, stop, enable, and disable units.
 - **Commands**:
-  - View journal size:
+  - Start a service:
     ```bash
-    journalctl --disk-usage
+    sudo systemctl start <service_name>
     ```
-  - Clear journal logs older than 7 days:
+  - Stop a service:
     ```bash
-    sudo journalctl --vacuum-time=7d
+    sudo systemctl stop <service_name>
     ```
-  - Limit the journal size:
+  - Enable a service to start at boot:
     ```bash
-    sudo journalctl --vacuum-size=100M
+    sudo systemctl enable <service_name>
+    ```
+  - Disable a service:
+    ```bash
+    sudo systemctl disable <service_name>
+    ```
+  - Restart a service:
+    ```bash
+    sudo systemctl restart <service_name>
     ```
 
 ---
 
-## 2. The Structure of /etc
+## 4. systemd Configuration
 
-### 2.1 Understanding /etc Directory
-- **Objective**: Explore the `/etc` directory structure.
-- **Explanation**:
-  - `/etc`: Contains system configuration files.
-  - Subdirectories organize configuration files for different services.
-  - Example:
+### 4.1 Viewing Configuration Files
+- **Objective**: Locate and view systemd configuration files.
+- **Locations**:
+  - System units: `/lib/systemd/system/`
+  - Custom units: `/etc/systemd/system/`
+- **Commands**:
+  - View a unit file:
     ```bash
-    ls -F /etc
+    cat /lib/systemd/system/<unit_name>.service
     ```
-    This lists all directories and files in `/etc`, where most items are now subdirectories.
+  - Check unit dependencies:
+    ```bash
+    systemctl list-dependencies <unit_name>
+    ```
 
-### 2.2 Customizing Configuration
-- **Objective**: Customize system configuration.
+### 4.2 Editing and Reloading Configuration
+- **Objective**: Edit unit files and apply changes.
 - **Steps**:
-  1. Locate the configuration file, e.g., `/etc/systemd/system`.
-  2. Edit using a text editor:
+  1. Edit a unit file:
+      ```bash
+      sudo nano /etc/systemd/system/<unit_name>.service
+      ```
+  2. Save changes and reload systemd:
+      ```bash
+      sudo systemctl daemon-reload
+      ```
+  3. Restart the service:
+      ```bash
+      sudo systemctl restart <unit_name>
+      ```
+
+---
+
+## 5. System V Runlevels and systemd Targets
+
+### 5.1 Runlevels in System V
+- **Objective**: Understand traditional System V runlevels.
+- **Runlevels**:
+  - `0`: Halt (shuts down the system)
+  - `1`: Single-user mode (rescue mode)
+  - `3`: Multi-user mode (no GUI)
+  - `5`: Multi-user mode with GUI
+  - `6`: Reboot
+- **Command**:
+  ```bash
+  who -r
+  ```
+
+### 5.2 systemd Targets
+- **Objective**: Map runlevels to systemd targets.
+- **Target Equivalents**:
+  - `runlevel 0` → `poweroff.target`
+  - `runlevel 1` → `rescue.target`
+  - `runlevel 3` → `multi-user.target`
+  - `runlevel 5` → `graphical.target`
+  - `runlevel 6` → `reboot.target`
+- **Commands**:
+  - Change to a target:
     ```bash
-    sudo nano /etc/systemd/system/example.service
+    sudo systemctl isolate <target>
     ```
-  3. Save changes and reload systemd:
+  - Set the default target:
     ```bash
-    sudo systemctl daemon-reload
+    sudo systemctl set-default <target>
+    ```
+  - View the default target:
+    ```bash
+    systemctl get-default
     ```
 
 ---
 
-## 3. User Management Files
+## 6. Shutting Down and Restarting
 
-### 3.1 The /etc/passwd File
-- **Objective**: Understand and manage user information.
-- **Explanation**:
-  - `/etc/passwd` maps usernames to user IDs (UIDs).
-  - Format:
-    ```
-    username:x:UID:GID:Full Name:Home Directory:Shell
-    ```
+### 6.1 systemd Commands
+- **Objective**: Shutdown and restart the system.
 - **Commands**:
-  - View the `/etc/passwd` file:
+  - Shut down immediately:
     ```bash
-    cat /etc/passwd
+    sudo systemctl poweroff
     ```
+  - Reboot immediately:
+    ```bash
+    sudo systemctl reboot
+    ```
+  - Schedule a shutdown:
+    ```bash
+    sudo shutdown -h 10 "System maintenance"
+    ```
+    (Shutdown in 10 minutes with a message)
 
-### 3.2 The /etc/shadow File
-- **Objective**: Manage user passwords.
-- **Explanation**:
-  - `/etc/shadow` stores encrypted user passwords.
-  - Only accessible by the root user for security.
-- **Commands**:
-  - View the `/etc/shadow` file:
-    ```bash
-    sudo cat /etc/shadow
-    ```
+---
 
-### 3.3 Manipulating Users and Passwords
-- **Objective**: Add, modify, and delete users.
+## 7. The Initial RAM Filesystem (initramfs)
+
+### 7.1 Overview
+- **Objective**: Understand initramfs.
+- `initramfs` is a temporary root filesystem loaded into memory during boot.
+- It preloads drivers and modules needed to mount the real root filesystem.
+
+### 7.2 Viewing initramfs Contents
 - **Commands**:
-  - Add a new user:
+  - Locate the initramfs image:
     ```bash
-    sudo adduser username
+    ls /boot/initramfs-*.img
     ```
-  - Delete a user:
+  - Unpack the image (using `unmkinitramfs` or `lsinitrd`):
     ```bash
-    sudo deluser username
-    ```
-  - Change a user’s password:
-    ```bash
-    sudo passwd username
+    lsinitrd /boot/initramfs-<version>.img
     ```
 
-### 3.4 Working with Groups
-- **Objective**: Manage user groups.
+### 7.3 Rebuilding initramfs
+- **Objective**: Rebuild the initramfs image after modifying drivers or kernel modules.
 - **Commands**:
-  - List groups:
+  - For Debian/Ubuntu:
     ```bash
-    cat /etc/group
+    sudo update-initramfs -u
     ```
-  - Add a group:
+  - For Red Hat/CentOS:
     ```bash
-    sudo groupadd groupname
-    ```
-  - Add a user to a group:
-    ```bash
-    sudo usermod -aG groupname username
+    sudo dracut -f
     ```
 
 ---
 
-## 4. Setting the Time
+## 8. Emergency Booting and Single-User Mode
 
-### 4.1 Setting Time Zone
-- **Objective**: Configure the system time zone.
-- **Commands**:
-  - List available time zones:
-    ```bash
-    timedatectl list-timezones
-    ```
-  - Set the time zone:
-    ```bash
-    sudo timedatectl set-timezone Region/City
-    ```
-  - Verify the current time and time zone:
-    ```bash
-    timedatectl
-    ```
+### 8.1 Single-User Mode
+- **Objective**: Boot into a minimal rescue environment.
+- **Steps**:
+  1. Reboot the system and access the GRUB menu.
+  2. Edit the boot entry by pressing `e`.
+  3. Append `systemd.unit=rescue.target` to the `linux` line.
+  4. Press `Ctrl+X` to boot.
 
-### 4.2 Synchronizing Time with NTP
-- **Objective**: Sync time using NTP (Network Time Protocol).
-- **Commands**:
-  - Enable and start systemd-timesyncd:
-    ```bash
-    sudo systemctl enable systemd-timesyncd
-    sudo systemctl start systemd-timesyncd
-    ```
-  - Check synchronization status:
-    ```bash
-    timedatectl status
-    ```
+### 8.2 Emergency Mode
+- **Objective**: Boot into a minimal environment for critical repair.
+- **Steps**:
+  1. Access the GRUB menu.
+  2. Edit the boot entry and add:
+      ```
+      systemd.unit=emergency.target
+      ```
+  3. Boot with `Ctrl+X`.
 
 ---
 
-## 5. Scheduling Tasks
+## 9. Practical Exercises
 
-### 5.1 Scheduling Recurring Tasks with cron
-- **Objective**: Automate tasks using cron jobs.
-- **Commands**:
-  - Edit crontab:
+### Exercise 1: Managing systemd Units
+1. List all active units using:
     ```bash
-    crontab -e
+    systemctl list-units
     ```
-  - List current cron jobs:
-    ```bash
-    crontab -l
-    ```
-  - Example cron entry (runs daily at 9:15 AM):
-    ```
-    15 09 * * * /path/to/command
-    ```
+2. Stop and disable a service, then enable and start it.
 
-### 5.2 Scheduling with systemd Timer Units
-- **Objective**: Schedule tasks with systemd timers.
-- **Commands**:
-  - Create a timer unit:
-    ```bash
-    sudo nano /etc/systemd/system/example.timer
-    ```
-    Example configuration:
-    ```
-    [Unit]
-    Description=Example Timer
+### Exercise 2: Switching Targets
+1. Check the current target.
+2. Switch to `multi-user.target` and back to `graphical.target`.
 
-    [Timer]
-    OnCalendar=*-*-* *:00
-    Persistent=true
-
-    [Install]
-    WantedBy=timers.target
-    ```
-  - Enable and start the timer:
-    ```bash
-    sudo systemctl enable example.timer
-    sudo systemctl start example.timer
-    ```
-  - Check timer status:
-    ```bash
-    systemctl list-timers
-    ```
-
----
-
-## 6. Practical Exercises
-
-### Exercise 1: Managing Logs
-1. Check system logs using `journalctl`.
-2. Rotate logs manually using `logrotate`.
-3. Clear old logs using `journalctl --vacuum-time`.
-
-### Exercise 2: User and Group Management
-1. Create a new user and set a password.
-2. Add the user to a new group.
-3. Verify the user’s group memberships.
-
-### Exercise 3: Scheduling Tasks
-1. Schedule a cron job to display a message every hour.
-2. Create a systemd timer that runs a script daily.
+### Exercise 3: Rebuilding initramfs
+1. Rebuild the initramfs image.
+2. Reboot and verify the changes.

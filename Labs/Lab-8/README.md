@@ -1,257 +1,248 @@
-# Lab-5: How User Space Starts
+# Lab-8: Introduction to Shell Scripts
+
+---
 
 ## 1. Introduction
 
 ### 1.1 Overview
-- User space starts after the kernel initializes the system and starts the first user-space process, `init`.
-- The startup sequence is roughly:
-  1. `init` process starts.
-  2. Essential low-level services (e.g., `udevd`, `syslogd`) initialize.
-  3. Network configuration occurs.
-  4. Mid- and high-level services (e.g., `cron`, printing) start.
-  5. Login prompts, GUIs, and high-level applications initialize.
+- A shell script is a series of commands written in a file that the shell executes as if they were typed into a terminal.
+- Shell scripts automate repetitive tasks, simplify complex commands, and facilitate system administration.
+- The Bourne shell (`/bin/sh`) is the standard shell, but most Linux distributions use an enhanced version called **bash**.
+
+### 1.2 Objectives
+- Learn the basics of writing and running shell scripts.
+- Understand quoting, variables, conditionals, loops, and subshells.
+- Master common shell utilities like `basename`, `awk`, and `sed`.
 
 ---
 
-## 2. Identifying Your `init`
+## 2. Shell Script Basics
 
-### 2.1 Checking the `init` System
-- **Objective**: Identify the `init` system in use.
-- **Commands**:
-  - Check the `init` process:
-    ```bash
-    ps -p 1 -o comm=
-    ```
-  - Alternatively, use:
-    ```bash
-    systemctl
-    ```
-    If the output shows `systemd`, then the system is using systemd.
-
-- **Notes**:
-  - Most modern Linux distributions use `systemd`.
-  - Older systems may use System V (`sysvinit`) or Upstart.
-
----
-
-## 3. systemd
-
-### 3.1 Overview
-- `systemd` is the standard `init` system on most modern Linux distributions.
-- It manages services and system initialization using units.
-
-### 3.2 Units and Unit Types
-- **Objective**: Understand systemd units.
-- **Types of Units**:
-  - **Service Units** (`.service`): Start, stop, and manage services.
-  - **Target Units** (`.target`): Group services to achieve a system state.
-  - **Mount Units** (`.mount`): Control filesystem mounting.
-  - **Timer Units** (`.timer`): Schedule tasks.
-
-### 3.3 Viewing Units and Status
-- **Objective**: List and check the status of systemd units.
-- **Commands**:
-  - List all units:
-    ```bash
-    systemctl list-units
-    ```
-  - List failed units:
-    ```bash
-    systemctl --failed
-    ```
-  - Check the status of a specific unit:
-    ```bash
-    systemctl status <unit_name>
-    ```
-
-### 3.4 Managing Units
-- **Objective**: Start, stop, enable, and disable units.
-- **Commands**:
-  - Start a service:
-    ```bash
-    sudo systemctl start <service_name>
-    ```
-  - Stop a service:
-    ```bash
-    sudo systemctl stop <service_name>
-    ```
-  - Enable a service to start at boot:
-    ```bash
-    sudo systemctl enable <service_name>
-    ```
-  - Disable a service:
-    ```bash
-    sudo systemctl disable <service_name>
-    ```
-  - Restart a service:
-    ```bash
-    sudo systemctl restart <service_name>
-    ```
-
----
-
-## 4. systemd Configuration
-
-### 4.1 Viewing Configuration Files
-- **Objective**: Locate and view systemd configuration files.
-- **Locations**:
-  - System units: `/lib/systemd/system/`
-  - Custom units: `/etc/systemd/system/`
-- **Commands**:
-  - View a unit file:
-    ```bash
-    cat /lib/systemd/system/<unit_name>.service
-    ```
-  - Check unit dependencies:
-    ```bash
-    systemctl list-dependencies <unit_name>
-    ```
-
-### 4.2 Editing and Reloading Configuration
-- **Objective**: Edit unit files and apply changes.
+### 2.1 Creating a Shell Script
+- **Objective**: Create a basic shell script.
 - **Steps**:
-  1. Edit a unit file:
-      ```bash
-      sudo nano /etc/systemd/system/<unit_name>.service
+  1. Open a text editor (e.g., `nano` or `vim`).
+  2. Start the script with the shebang line:
+      ```sh
+      #!/bin/sh
       ```
-  2. Save changes and reload systemd:
-      ```bash
-      sudo systemctl daemon-reload
+      - This indicates that `/bin/sh` will interpret the script.
+  3. Write the script:
+      ```sh
+      #!/bin/sh
+      echo "Hello, World!"
+      ls
       ```
-  3. Restart the service:
-      ```bash
-      sudo systemctl restart <unit_name>
-      ```
+  4. Save the file as `hello.sh`.
 
----
-
-## 5. System V Runlevels and systemd Targets
-
-### 5.1 Runlevels in System V
-- **Objective**: Understand traditional System V runlevels.
-- **Runlevels**:
-  - `0`: Halt (shuts down the system)
-  - `1`: Single-user mode (rescue mode)
-  - `3`: Multi-user mode (no GUI)
-  - `5`: Multi-user mode with GUI
-  - `6`: Reboot
+### 2.2 Making the Script Executable
+- **Objective**: Set the executable permission.
 - **Command**:
   ```bash
-  who -r
+  chmod +x hello.sh
+  ```
+- **Explanation**:
+  - `chmod +x` adds the executable permission.
+  - If you don’t want others to read or execute the script, use:
+    ```bash
+    chmod 700 hello.sh
+    ```
+
+### 2.3 Running the Script
+- **Objective**: Execute the shell script.
+- **Commands**:
+  - If the script is in the current directory:
+    ```bash
+    ./hello.sh
+    ```
+  - If the script is in a directory in the PATH:
+    ```bash
+    hello.sh
+    ```
+  - Using the full path:
+    ```bash
+    /home/user/scripts/hello.sh
+    ```
+
+---
+
+## 3. Quoting and Literals
+
+### 3.1 Understanding Quotes
+- **Objective**: Learn when to use quotes.
+- **Types of Quotes**:
+  - **Single Quotes** (`'`): Preserve literal value (no variable expansion).
+    ```sh
+    echo '$HOME'  # Output: $HOME
+    ```
+  - **Double Quotes** (`"`): Allow variable expansion.
+    ```sh
+    echo "$HOME"  # Output: /home/username
+    ```
+  - **Backslash** (`\`): Escape a single character.
+    ```sh
+    echo "He said, \"Hello!\""
+    ```
+  - **No Quotes**: Words are split at spaces and tabs.
+    ```sh
+    echo $HOME
+    ```
+
+### 3.2 Special Cases
+- **Escape a Single Quote**:
+  - Using double quotes:
+    ```sh
+    echo "It's a beautiful day!"
+    ```
+  - Using backslash:
+    ```sh
+    echo 'It'\''s a beautiful day!'
+    ```
+
+---
+
+## 4. Special Variables
+
+### 4.1 Using Script Arguments
+- **Objective**: Access arguments passed to the script.
+- **Special Variables**:
+  - `$1`, `$2`, ... : Individual arguments.
+  - `$#`: Number of arguments.
+  - `$@`: All arguments.
+  - `$0`: Script name.
+- **Example**:
+  ```sh
+  #!/bin/sh
+  echo "Script name: $0"
+  echo "First argument: $1"
+  echo "All arguments: $@"
+  echo "Number of arguments: $#"
+  ```
+- **Running the Script**:
+  ```bash
+  ./script.sh one two three
+  ```
+- **Output**:
+  ```
+  Script name: ./script.sh
+  First argument: one
+  All arguments: one two three
+  Number of arguments: 3
   ```
 
-### 5.2 systemd Targets
-- **Objective**: Map runlevels to systemd targets.
-- **Target Equivalents**:
-  - `runlevel 0` → `poweroff.target`
-  - `runlevel 1` → `rescue.target`
-  - `runlevel 3` → `multi-user.target`
-  - `runlevel 5` → `graphical.target`
-  - `runlevel 6` → `reboot.target`
-- **Commands**:
-  - Change to a target:
-    ```bash
-    sudo systemctl isolate <target>
-    ```
-  - Set the default target:
-    ```bash
-    sudo systemctl set-default <target>
-    ```
-  - View the default target:
-    ```bash
-    systemctl get-default
-    ```
+### 4.2 Exit Codes
+- **Objective**: Understand exit codes.
+- **Explanation**:
+  - `$?`: Holds the exit code of the last executed command.
+  - `0`: Success.
+  - Non-zero: Error.
+- **Example**:
+  ```sh
+  ls /not_exist_dir
+  echo "Exit code: $?"
+  ```
 
 ---
 
-## 6. Shutting Down and Restarting
+## 5. Conditionals
 
-### 6.1 systemd Commands
-- **Objective**: Shutdown and restart the system.
-- **Commands**:
-  - Shut down immediately:
-    ```bash
-    sudo systemctl poweroff
-    ```
-  - Reboot immediately:
-    ```bash
-    sudo systemctl reboot
-    ```
-  - Schedule a shutdown:
-    ```bash
-    sudo shutdown -h 10 "System maintenance"
-    ```
-    (Shutdown in 10 minutes with a message)
+### 5.1 Using `if` Statements
+- **Objective**: Execute commands conditionally.
+- **Syntax**:
+  ```sh
+  if [ condition ]; then
+    # commands if true
+  else
+    # commands if false
+  fi
+  ```
+- **Example**:
+  ```sh
+  #!/bin/sh
+  if [ -f "$1" ]; then
+    echo "File exists."
+  else
+    echo "File does not exist."
+  fi
+  ```
+- **Explanation**:
+  - `-f`: Checks if the file exists.
 
----
-
-## 7. The Initial RAM Filesystem (initramfs)
-
-### 7.1 Overview
-- **Objective**: Understand initramfs.
-- `initramfs` is a temporary root filesystem loaded into memory during boot.
-- It preloads drivers and modules needed to mount the real root filesystem.
-
-### 7.2 Viewing initramfs Contents
-- **Commands**:
-  - Locate the initramfs image:
-    ```bash
-    ls /boot/initramfs-*.img
-    ```
-  - Unpack the image (using `unmkinitramfs` or `lsinitrd`):
-    ```bash
-    lsinitrd /boot/initramfs-<version>.img
-    ```
-
-### 7.3 Rebuilding initramfs
-- **Objective**: Rebuild the initramfs image after modifying drivers or kernel modules.
-- **Commands**:
-  - For Debian/Ubuntu:
-    ```bash
-    sudo update-initramfs -u
-    ```
-  - For Red Hat/CentOS:
-    ```bash
-    sudo dracut -f
-    ```
+### 5.2 Using `case` Statements
+- **Objective**: Match a variable against patterns.
+- **Syntax**:
+  ```sh
+  case $1 in
+    start) echo "Starting...";;
+    stop) echo "Stopping...";;
+    *) echo "Unknown command.";;
+  esac
+  ```
 
 ---
 
-## 8. Emergency Booting and Single-User Mode
+## 6. Loops
 
-### 8.1 Single-User Mode
-- **Objective**: Boot into a minimal rescue environment.
-- **Steps**:
-  1. Reboot the system and access the GRUB menu.
-  2. Edit the boot entry by pressing `e`.
-  3. Append `systemd.unit=rescue.target` to the `linux` line.
-  4. Press `Ctrl+X` to boot.
+### 6.1 `for` Loops
+- **Objective**: Iterate over a list of items.
+- **Syntax**:
+  ```sh
+  for var in item1 item2 item3; do
+    echo $var
+  done
+  ```
+- **Example**:
+  ```sh
+  for file in *.txt; do
+    echo "Processing $file..."
+  done
+  ```
 
-### 8.2 Emergency Mode
-- **Objective**: Boot into a minimal environment for critical repair.
-- **Steps**:
-  1. Access the GRUB menu.
-  2. Edit the boot entry and add:
-      ```
-      systemd.unit=emergency.target
-      ```
-  3. Boot with `Ctrl+X`.
+### 6.2 `while` Loops
+- **Objective**: Repeat commands while a condition is true.
+- **Syntax**:
+  ```sh
+  while [ condition ]; do
+    # commands
+  done
+  ```
+- **Example**:
+  ```sh
+  i=1
+  while [ $i -le 5 ]; do
+    echo "Count: $i"
+    i=$((i+1))
+  done
+  ```
 
 ---
 
-## 9. Practical Exercises
+## 7. Command Substitution
 
-### Exercise 1: Managing systemd Units
-1. List all active units using:
-    ```bash
-    systemctl list-units
-    ```
-2. Stop and disable a service, then enable and start it.
+### 7.1 Using Command Output in Scripts
+- **Objective**: Capture the output of a command.
+- **Syntax**:
+  ```sh
+  var=$(command)
+  ```
+- **Example**:
+  ```sh
+  DATE=$(date)
+  echo "Today is $DATE"
+  ```
 
-### Exercise 2: Switching Targets
-1. Check the current target.
-2. Switch to `multi-user.target` and back to `graphical.target`.
+---
 
-### Exercise 3: Rebuilding initramfs
-1. Rebuild the initramfs image.
-2. Reboot and verify the changes.
+## 8. Practical Exercises
+
+### Exercise 1: Writing and Running a Script
+1. Create a script that prints the current date and lists all files in the home directory.
+2. Make the script executable and run it.
+
+### Exercise 2: Using Conditionals and Loops
+1. Write a script that checks if a file exists.
+2. If the file exists, print its contents line by line using a `while` loop.
+
+### Exercise 3: Command Substitution and Variables
+1. Write a script that captures the output of the `df -h` command.
+2. Display the disk usage for each mounted filesystem.

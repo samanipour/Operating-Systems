@@ -1,248 +1,252 @@
-# Lab-10: Introduction to Shell Scripts
+# Lab-9: Network Applications and Services
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Overview
-- A shell script is a series of commands written in a file that the shell executes as if they were typed into a terminal.
-- Shell scripts automate repetitive tasks, simplify complex commands, and facilitate system administration.
-- The Bourne shell (`/bin/sh`) is the standard shell, but most Linux distributions use an enhanced version called **bash**.
-
-### 1.2 Objectives
-- Learn the basics of writing and running shell scripts.
-- Understand quoting, variables, conditionals, loops, and subshells.
-- Master common shell utilities like `basename`, `awk`, and `sed`.
+- This manual explains the configuration and management of network applications and services in Linux.
+- By the end of this lab, students will be able to:
+  - Understand the basics of network services.
+  - Configure network servers such as SSH.
+  - Use diagnostic tools to troubleshoot network issues.
+  - Understand network security and sockets.
 
 ---
 
-## 2. Shell Script Basics
+## 2. The Basics of Services
 
-### 2.1 Creating a Shell Script
-- **Objective**: Create a basic shell script.
-- **Steps**:
-  1. Open a text editor (e.g., `nano` or `vim`).
-  2. Start the script with the shebang line:
-      ```sh
-      #!/bin/sh
-      ```
-      - This indicates that `/bin/sh` will interpret the script.
-  3. Write the script:
-      ```sh
-      #!/bin/sh
-      echo "Hello, World!"
-      ls
-      ```
-  4. Save the file as `hello.sh`.
-
-### 2.2 Making the Script Executable
-- **Objective**: Set the executable permission.
-- **Command**:
-  ```bash
-  chmod +x hello.sh
-  ```
+### 2.1 Understanding TCP Services
+- **Objective**: Explore how TCP services work using telnet.
 - **Explanation**:
-  - `chmod +x` adds the executable permission.
-  - If you don’t want others to read or execute the script, use:
-    ```bash
-    chmod 700 hello.sh
-    ```
+  - TCP services provide uninterrupted two-way data streams.
+  - HTTP (Hypertext Transfer Protocol) uses TCP port 80 for communication.
 
-### 2.3 Running the Script
-- **Objective**: Execute the shell script.
+### 2.2 Using `telnet` to Connect to a Web Server
+- **Objective**: Manually connect to a web server using TCP.
 - **Commands**:
-  - If the script is in the current directory:
-    ```bash
-    ./hello.sh
-    ```
-  - If the script is in a directory in the PATH:
-    ```bash
-    hello.sh
-    ```
-  - Using the full path:
-    ```bash
-    /home/user/scripts/hello.sh
-    ```
-
----
-
-## 3. Quoting and Literals
-
-### 3.1 Understanding Quotes
-- **Objective**: Learn when to use quotes.
-- **Types of Quotes**:
-  - **Single Quotes** (`'`): Preserve literal value (no variable expansion).
-    ```sh
-    echo '$HOME'  # Output: $HOME
-    ```
-  - **Double Quotes** (`"`): Allow variable expansion.
-    ```sh
-    echo "$HOME"  # Output: /home/username
-    ```
-  - **Backslash** (`\`): Escape a single character.
-    ```sh
-    echo "He said, \"Hello!\""
-    ```
-  - **No Quotes**: Words are split at spaces and tabs.
-    ```sh
-    echo $HOME
-    ```
-
-### 3.2 Special Cases
-- **Escape a Single Quote**:
-  - Using double quotes:
-    ```sh
-    echo "It's a beautiful day!"
-    ```
-  - Using backslash:
-    ```sh
-    echo 'It'\''s a beautiful day!'
-    ```
-
----
-
-## 4. Special Variables
-
-### 4.1 Using Script Arguments
-- **Objective**: Access arguments passed to the script.
-- **Special Variables**:
-  - `$1`, `$2`, ... : Individual arguments.
-  - `$#`: Number of arguments.
-  - `$@`: All arguments.
-  - `$0`: Script name.
-- **Example**:
-  ```sh
-  #!/bin/sh
-  echo "Script name: $0"
-  echo "First argument: $1"
-  echo "All arguments: $@"
-  echo "Number of arguments: $#"
-  ```
-- **Running the Script**:
   ```bash
-  ./script.sh one two three
+  telnet example.org 80
   ```
-- **Output**:
-  ```
-  Script name: ./script.sh
-  First argument: one
-  All arguments: one two three
-  Number of arguments: 3
-  ```
-
-### 4.2 Exit Codes
-- **Objective**: Understand exit codes.
-- **Explanation**:
-  - `$?`: Holds the exit code of the last executed command.
-  - `0`: Success.
-  - Non-zero: Error.
-- **Example**:
-  ```sh
-  ls /not_exist_dir
-  echo "Exit code: $?"
-  ```
+- **Steps**:
+  1. Open a terminal.
+  2. Connect to the IANA example web server on TCP port 80:
+      ```bash
+      telnet example.org 80
+      ```
+  3. Once connected, type the following:
+      ```
+      GET / HTTP/1.1
+      Host: example.org
+      ```
+      (Press ENTER twice)
+  4. Observe the HTML response from the server.
+  5. Terminate the connection:
+      - Press `CTRL+D`
 
 ---
 
-## 5. Conditionals
+## 3. A Closer Look with `curl`
 
-### 5.1 Using `if` Statements
-- **Objective**: Execute commands conditionally.
-- **Syntax**:
-  ```sh
-  if [ condition ]; then
-    # commands if true
-  else
-    # commands if false
-  fi
+### 3.1 Using `curl` to Communicate with HTTP Servers
+- **Objective**: Examine HTTP communication using `curl`.
+- **Commands**:
+  ```bash
+  curl --trace-ascii trace_file http://www.example.org/
   ```
-- **Example**:
-  ```sh
-  #!/bin/sh
-  if [ -f "$1" ]; then
-    echo "File exists."
-  else
-    echo "File does not exist."
-  fi
-  ```
-- **Explanation**:
-  - `-f`: Checks if the file exists.
-
-### 5.2 Using `case` Statements
-- **Objective**: Match a variable against patterns.
-- **Syntax**:
-  ```sh
-  case $1 in
-    start) echo "Starting...";;
-    stop) echo "Stopping...";;
-    *) echo "Unknown command.";;
-  esac
-  ```
+- **Steps**:
+  1. Install `curl` if not already installed:
+      ```bash
+      sudo apt install curl
+      ```
+  2. Send a request to the web server:
+      ```bash
+      curl --trace-ascii trace_file http://www.example.org/
+      ```
+  3. Open the trace file to view the request and response:
+      ```bash
+      cat trace_file
+      ```
+  4. Observe the request headers and server response.
 
 ---
 
-## 6. Loops
+## 4. Network Servers
 
-### 6.1 `for` Loops
-- **Objective**: Iterate over a list of items.
-- **Syntax**:
-  ```sh
-  for var in item1 item2 item3; do
-    echo $var
-  done
+### 4.1 Secure Shell (SSH)
+
+#### 4.1.1 Installing and Enabling SSH Server
+- **Objective**: Install and enable OpenSSH server.
+- **Commands**:
+  - Install SSH server:
+    ```bash
+    sudo apt install openssh-server
+    ```
+  - Enable and start the SSH service:
+    ```bash
+    sudo systemctl enable ssh
+    sudo systemctl start ssh
+    ```
+  - Verify the SSH service status:
+    ```bash
+    sudo systemctl status ssh
+    ```
+
+#### 4.1.2 Configuring SSH Server
+- **Objective**: Modify SSH server settings for secure access.
+- **Steps**:
+  1. Edit the SSH configuration file:
+      ```bash
+      sudo nano /etc/ssh/sshd_config
+      ```
+  2. Recommended settings:
+      - Disable root login:
+        ```
+        PermitRootLogin no
+        ```
+      - Specify allowed users:
+        ```
+        AllowUsers username
+        ```
+  3. Save and close the file.
+  4. Restart SSH to apply changes:
+      ```bash
+      sudo systemctl restart ssh
+      ```
+
+#### 4.1.3 Connecting to SSH Server
+- **Objective**: Connect to the SSH server using the client.
+- **Commands**:
+  ```bash
+  ssh username@hostname
   ```
 - **Example**:
-  ```sh
-  for file in *.txt; do
-    echo "Processing $file..."
-  done
+  ```bash
+  ssh user@example.org
   ```
 
-### 6.2 `while` Loops
-- **Objective**: Repeat commands while a condition is true.
-- **Syntax**:
-  ```sh
-  while [ condition ]; do
-    # commands
-  done
-  ```
-- **Example**:
-  ```sh
-  i=1
-  while [ $i -le 5 ]; do
-    echo "Count: $i"
-    i=$((i+1))
-  done
-  ```
+### 4.2 Using `fail2ban` for SSH Security
+- **Objective**: Protect SSH server from brute-force attacks.
+- **Commands**:
+  - Install fail2ban:
+    ```bash
+    sudo apt install fail2ban
+    ```
+  - Enable and start fail2ban:
+    ```bash
+    sudo systemctl enable fail2ban
+    sudo systemctl start fail2ban
+    ```
+  - View fail2ban status:
+    ```bash
+    sudo fail2ban-client status
+    ```
+  - View SSH jail status:
+    ```bash
+    sudo fail2ban-client status sshd
+    ```
 
 ---
 
-## 7. Command Substitution
+## 5. Diagnostic Tools
 
-### 7.1 Using Command Output in Scripts
-- **Objective**: Capture the output of a command.
-- **Syntax**:
-  ```sh
-  var=$(command)
-  ```
-- **Example**:
-  ```sh
-  DATE=$(date)
-  echo "Today is $DATE"
-  ```
+### 5.1 Using `lsof` to List Open Files and Ports
+- **Objective**: List open network ports and connections.
+- **Commands**:
+  - List all open ports:
+    ```bash
+    sudo lsof -i
+    ```
+  - List open ports for a specific service:
+    ```bash
+    sudo lsof -i :22
+    ```
+
+### 5.2 Using `tcpdump` for Packet Analysis
+- **Objective**: Capture and analyze network packets.
+- **Commands**:
+  - Install `tcpdump`:
+    ```bash
+    sudo apt install tcpdump
+    ```
+  - Capture packets on a network interface:
+    ```bash
+    sudo tcpdump -i enp0s3
+    ```
+  - Capture packets on a specific port:
+    ```bash
+    sudo tcpdump -i enp0s3 port 80
+    ```
+
+### 5.3 Using `netcat` for Network Connections
+- **Objective**: Create network connections and send data.
+- **Commands**:
+  - Start a listener on a port:
+    ```bash
+    nc -l 1234
+    ```
+  - Connect to the listener:
+    ```bash
+    nc <host-ip> 1234
+    ```
+
+### 5.4 Port Scanning with `nmap`
+- **Objective**: Scan a network for open ports.
+- **Commands**:
+  - Install `nmap`:
+    ```bash
+    sudo apt install nmap
+    ```
+  - Scan a host for open ports:
+    ```bash
+    nmap <host-ip>
+    ```
+  - Perform a detailed scan:
+    ```bash
+    nmap -A <host-ip>
+    ```
 
 ---
 
-## 8. Practical Exercises
+## 6. Network Security
 
-### Exercise 1: Writing and Running a Script
-1. Create a script that prints the current date and lists all files in the home directory.
-2. Make the script executable and run it.
+### 6.1 Identifying Vulnerabilities
+- **Objective**: Identify common network vulnerabilities.
+- **Types of Vulnerabilities**:
+  - Direct attacks (e.g., buffer overflow).
+  - Cleartext password sniffing.
+  - Unauthenticated services.
 
-### Exercise 2: Using Conditionals and Loops
-1. Write a script that checks if a file exists.
-2. If the file exists, print its contents line by line using a `while` loop.
+### 6.2 Securing Network Services
+- **Objective**: Harden network services against attacks.
+- **Best Practices**:
+  - Disable unnecessary services:
+    ```bash
+    sudo systemctl disable service_name
+    ```
+  - Use SSH instead of Telnet.
+  - Apply firewall rules:
+    ```bash
+    sudo ufw enable
+    sudo ufw allow ssh
+    sudo ufw deny telnet
+    ```
 
-### Exercise 3: Command Substitution and Variables
-1. Write a script that captures the output of the `df -h` command.
-2. Display the disk usage for each mounted filesystem.
+---
+
+## 7. Practical Exercises
+
+### Exercise 1: Connecting to a Web Server
+1. Connect to a web server using `telnet`.
+2. Send a GET request manually.
+3. Observe the server response.
+
+### Exercise 2: Configuring and Using SSH
+1. Install and enable OpenSSH server.
+2. Secure the SSH server by disabling root login.
+3. Connect to the SSH server from another machine.
+
+### Exercise 3: Using Diagnostic Tools
+1. Monitor open ports with `lsof`.
+2. Capture network packets using `tcpdump`.
+3. Perform a network scan with `nmap`.

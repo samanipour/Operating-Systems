@@ -1,239 +1,262 @@
-# Lab-8: Understanding Your Network and Its Configuration
+# Lab 7: A Closer Look at Processes and Resource Utilization
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Overview
-- This manual explains the fundamentals of Linux networking, including:
-  - Viewing network configuration
-  - Managing IP addresses
-  - Configuring routing
-  - Understanding network layers
-  - Using basic network diagnostic tools
-- By the end of this lab, students will be able to analyze and configure Linux network interfaces and troubleshoot network connectivity.
+- In Linux, processes compete for system resources such as CPU, memory, and I/O.
+- The kernel manages resource allocation to maintain system stability and performance.
+- This manual covers:
+  - Tracking processes
+  - Viewing open files
+  - Tracing program execution
+  - Monitoring resource utilization
+  - Managing control groups (cgroups)
 
 ---
 
-## 2. Network Basics
+## 2. Tracking Processes
 
-### 2.1 Checking Network Interfaces
-- **Objective**: List all active and inactive network interfaces.
+### 2.1 Using `ps` to List Processes
+- **Objective**: View running processes and their details.
 - **Commands**:
-  - Using `ip`:
+  - List all running processes:
     ```bash
-    ip link show
+    ps -ef
     ```
-  - Using `ifconfig` (older systems):
+  - View a tree of processes:
     ```bash
-    ifconfig -a
+    ps -e --forest
     ```
-  - Using `nmcli` (for NetworkManager systems):
+  - Display detailed information:
     ```bash
-    nmcli device status
+    ps aux
     ```
 
-### 2.2 Viewing Interface Details
-- **Objective**: Display detailed information about network interfaces.
+### 2.2 Monitoring Processes with `top`
+- **Objective**: Monitor real-time system performance and resource usage.
 - **Commands**:
-  ```bash
-  ip addr show
-  ip -s link show
-  ```
-  - Example output:
+  - Start the `top` interface:
+    ```bash
+    top
     ```
-    2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
-        link/ether 08:00:27:4e:7a:1b brd ff:ff:ff:ff:ff:ff
-        inet 192.168.1.100/24 brd 192.168.1.255 scope global dynamic enp0s3
-           valid_lft 86394sec preferred_lft 86394sec
+  - Useful shortcuts:
+    - `P`: Sort by CPU usage
+    - `M`: Sort by memory usage
+    - `T`: Sort by running time
+    - `k`: Kill a process
+    - `q`: Quit `top`
+
+### 2.3 Advanced Monitoring with `htop`
+- **Objective**: Use an enhanced version of `top` with a user-friendly interface.
+- **Commands**:
+  - Install `htop`:
+    ```bash
+    sudo apt install htop
+    ```
+  - Launch `htop`:
+    ```bash
+    htop
+    ```
+  - Navigate using arrow keys, and use `F9` to kill processes.
+
+---
+
+## 3. Finding Open Files with `lsof`
+
+### 3.1 Viewing Open Files
+- **Objective**: List all open files by processes.
+- **Commands**:
+  - List all open files:
+    ```bash
+    sudo lsof
+    ```
+  - View files opened by a specific user:
+    ```bash
+    sudo lsof -u username
+    ```
+  - View files opened by a specific process:
+    ```bash
+    sudo lsof -p PID
+    ```
+  - Display open network connections:
+    ```bash
+    sudo lsof -i
+    ```
+
+### 3.2 Monitoring File Access in Real-Time
+- **Objective**: Monitor file access activity.
+- **Commands**:
+  - Monitor access to a file or directory:
+    ```bash
+    sudo watch -n 1 'lsof /path/to/directory'
     ```
 
 ---
 
-## 3. IP Addresses
+## 4. Tracing Program Execution and System Calls
 
-### 3.1 Viewing IP Addresses
-- **Objective**: Display the IP address configuration of all interfaces.
+### 4.1 Using `strace` to Trace System Calls
+- **Objective**: Trace system calls made by a program.
 - **Commands**:
-  ```bash
-  ip addr show
-  ```
-  - Or, using the older method:
+  - Trace a program's system calls:
     ```bash
-    ifconfig
+    strace -o output.txt -e trace=all ./program_name
+    ```
+  - Trace a running process by PID:
+    ```bash
+    sudo strace -p PID
+    ```
+  - Display network-related system calls:
+    ```bash
+    sudo strace -e trace=network ./program_name
     ```
 
-### 3.2 Adding an IP Address
-- **Objective**: Assign a new IP address to an interface.
+### 4.2 Using `ltrace` to Trace Library Calls
+- **Objective**: Trace library calls made by a program.
 - **Commands**:
-  ```bash
-  sudo ip addr add 192.168.1.10/24 dev enp0s3
-  ```
-
-### 3.3 Deleting an IP Address
-- **Objective**: Remove an assigned IP address.
-- **Commands**:
-  ```bash
-  sudo ip addr del 192.168.1.10/24 dev enp0s3
-  ```
-
-### 3.4 Enabling and Disabling Interfaces
-- **Objective**: Bring an interface up or down.
-- **Commands**:
-  - Bring up the interface:
+  - Trace library function calls:
     ```bash
-    sudo ip link set enp0s3 up
+    ltrace ./program_name
     ```
-  - Bring down the interface:
+  - Log the output to a file:
     ```bash
-    sudo ip link set enp0s3 down
+    ltrace -o ltrace_output.txt ./program_name
     ```
 
 ---
 
-## 4. Subnets and Routing
+## 5. Threads
 
-### 4.1 Understanding Subnets
+### 5.1 Understanding Threads
+- **Objective**: Identify single-threaded and multithreaded processes.
 - **Explanation**:
-  - Subnet masks define the network and host portions of an IP address.
-  - Example:
-    - IP Address: `192.168.1.10`
-    - Subnet Mask: `255.255.255.0` or `/24`
-    - Network Address: `192.168.1.0`
+  - **Single-threaded**: One execution flow per process.
+  - **Multithreaded**: Multiple execution flows within a single process.
 
-### 4.2 Viewing the Routing Table
-- **Objective**: Display the current routing table.
+### 5.2 Viewing Threads with `ps` and `top`
 - **Commands**:
-  ```bash
-  ip route show
-  ```
-  - Or:
+  - Display threads with `ps`:
     ```bash
-    route -n
+    ps -eLf
     ```
-
-### 4.3 Adding a Route
-- **Objective**: Add a new route to a network.
-- **Commands**:
-  ```bash
-  sudo ip route add 192.168.2.0/24 via 192.168.1.1 dev enp0s3
-  ```
-
-### 4.4 Deleting a Route
-- **Objective**: Remove an existing route.
-- **Commands**:
-  ```bash
-  sudo ip route del 192.168.2.0/24
-  ```
-
-### 4.5 Setting the Default Gateway
-- **Objective**: Configure the default gateway.
-- **Commands**:
-  ```bash
-  sudo ip route add default via 192.168.1.1 dev enp0s3
-  ```
+  - Show threads in `top`:
+    - Press `H` in the `top` interface.
 
 ---
 
-## 5. IPv6 Configuration
+## 6. Monitoring Resource Utilization
 
-### 5.1 Viewing IPv6 Addresses
-- **Objective**: Display IPv6 configuration.
+### 6.1 Monitoring CPU Usage
+- **Objective**: Check CPU utilization.
 - **Commands**:
-  ```bash
-  ip -6 addr show
-  ```
+  - Using `top` or `htop`.
+  - Using `mpstat` (from the `sysstat` package):
+    ```bash
+    sudo apt install sysstat
+    mpstat -P ALL 2
+    ```
 
-### 5.2 Adding an IPv6 Address
-- **Objective**: Assign an IPv6 address to an interface.
+### 6.2 Monitoring Memory Usage
+- **Objective**: View memory usage statistics.
 - **Commands**:
-  ```bash
-  sudo ip -6 addr add 2001:db8::1/64 dev enp0s3
-  ```
+  - Using `free`:
+    ```bash
+    free -h
+    ```
+  - Using `vmstat`:
+    ```bash
+    vmstat 2
+    ```
 
-### 5.3 Enabling IPv6 Forwarding
-- **Objective**: Allow IPv6 traffic forwarding.
+### 6.3 Monitoring Disk Usage
+- **Objective**: Check disk space and I/O performance.
 - **Commands**:
-  ```bash
-  sudo sysctl -w net.ipv6.conf.all.forwarding=1
-  ```
+  - Check disk space:
+    ```bash
+    df -h
+    ```
+  - Monitor disk I/O:
+    ```bash
+    iostat -xz 2
+    ```
+
+### 6.4 Monitoring Network Usage
+- **Objective**: Monitor network traffic and connections.
+- **Commands**:
+  - Using `ss`:
+    ```bash
+    ss -tunap
+    ```
+  - Using `iftop` (must be installed):
+    ```bash
+    sudo apt install iftop
+    sudo iftop
+    ```
 
 ---
 
-## 6. Basic ICMP and DNS Tools
+## 7. Control Groups (cgroups)
 
-### 6.1 Testing Connectivity with ping
-- **Objective**: Check connectivity to a host.
+### 7.1 Overview
+- **Objective**: Manage resource allocation using cgroups.
+- **Explanation**:
+  - **cgroups** limit and isolate resource usage for processes.
+  - Versions:
+    - **cgroup v1**: Hierarchical resource management.
+    - **cgroup v2**: Unified resource management.
+
+### 7.2 Viewing cgroups
 - **Commands**:
-  - IPv4:
+  - List all cgroups:
     ```bash
-    ping 8.8.8.8
+    cat /proc/cgroups
     ```
-  - IPv6:
+  - Display a process’s cgroup membership:
     ```bash
-    ping6 google.com
+    cat /proc/<PID>/cgroup
     ```
 
-### 6.2 Checking DNS Resolution
-- **Objective**: Verify DNS name resolution.
+### 7.3 Creating and Managing cgroups
+- **Objective**: Create and manage cgroups manually.
 - **Commands**:
-  ```bash
-  host google.com
-  nslookup google.com
-  dig google.com
-  ```
+  - Create a cgroup:
+    ```bash
+    sudo cgcreate -g cpu,memory:/my_cgroup
+    ```
+  - Limit CPU usage:
+    ```bash
+    sudo cgset -r cpu.shares=512 my_cgroup
+    ```
+  - Add a process to the cgroup:
+    ```bash
+    sudo cgclassify -g cpu,memory:/my_cgroup <PID>
+    ```
 
----
-
-## 7. Network Interface Configuration
-
-### 7.1 Manually Configuring Interfaces
-- **Objective**: Configure network interfaces manually.
+### 7.4 Viewing Resource Utilization in cgroups
 - **Commands**:
-  - Edit the configuration file:
+  - Check CPU usage:
     ```bash
-    sudo nano /etc/network/interfaces
+    cat /sys/fs/cgroup/cpu/my_cgroup/cpuacct.usage
     ```
-  - Example configuration:
-    ```
-    auto enp0s3
-    iface enp0s3 inet static
-        address 192.168.1.50
-        netmask 255.255.255.0
-        gateway 192.168.1.1
-    ```
-  - Restart the network service:
+  - Check memory usage:
     ```bash
-    sudo systemctl restart networking
-    ```
-
-### 7.2 Adding and Deleting Routes
-- **Objective**: Manage static routes manually.
-- **Commands**:
-  - Add a route:
-    ```bash
-    sudo route add -net 10.0.0.0/24 gw 192.168.1.1 dev enp0s3
-    ```
-  - Delete a route:
-    ```bash
-    sudo route del -net 10.0.0.0/24 dev enp0s3
+    cat /sys/fs/cgroup/memory/my_cgroup/memory.usage_in_bytes
     ```
 
 ---
 
 ## 8. Practical Exercises
 
-### Exercise 1: Basic IP Configuration
-1. View the current IP configuration using `ip addr show`.
-2. Add a new IP address to an interface.
-3. Test connectivity with `ping`.
+### Exercise 1: Monitoring Processes
+1. Use `ps`, `top`, and `htop` to monitor system processes.
+2. Sort by CPU and memory usage.
 
-### Exercise 2: Static Routing
-1. View the current routing table.
-2. Add a new route to a different network.
-3. Verify the route using `traceroute`.
+### Exercise 2: Using lsof and strace
+1. List open files by a specific user with `lsof`.
+2. Trace system calls of a program using `strace`.
 
-### Exercise 3: DNS Resolution
-1. Test DNS resolution using `nslookup`.
-2. Change the DNS server in `/etc/resolv.conf`.
-3. Verify with `dig`.
+### Exercise 3: Creating and Managing cgroups
+1. Create a cgroup to limit CPU usage.
+2. Add a process to the cgroup and monitor its resource usage.

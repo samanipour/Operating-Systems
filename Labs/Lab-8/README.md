@@ -5,9 +5,10 @@
 ## 1. Introduction
 
 ### 1.1 Overview
-- A shell script is a series of commands written in a file that the shell executes as if they were typed into a terminal.
-- Shell scripts automate repetitive tasks, simplify complex commands, and facilitate system administration.
-- The Bourne shell (`/bin/sh`) is the standard shell, but most Linux distributions use an enhanced version called **bash**.
+The primary benefit of BASH scripting is that you can use everything that is available in the
+BASH shell within a BASH script. Because your Linux distribution has hundreds (maybe even
+thousands) of commands, each of which can be used in a BASH script, BASH shell scripting can
+be a very powerful tool.
 
 ### 1.2 Objectives
 - Learn the basics of writing and running shell scripts.
@@ -16,233 +17,307 @@
 
 ---
 
-## 2. Shell Script Basics
+## 2. Basics of BASH Scripting
+To start a BASH script, enter the following as the first line of the script file:
 
-### 2.1 Creating a Shell Script
-- **Objective**: Create a basic shell script.
-- **Steps**:
-  1. Open a text editor (e.g., `nano` or `vim`).
-  2. Start the script with the shebang line:
-      ```sh
-      #!/bin/sh
-      ```
-      - This indicates that `/bin/sh` will interpret the script.
-  3. Write the script:
-      ```sh
-      #!/bin/sh
-      echo "Hello, World!"
-      ls
-      ```
-  4. Save the file as `hello.sh`.
+`#!/bin/bash`
 
-### 2.2 Making the Script Executable
-- **Objective**: Set the executable permission.
-- **Command**:
-  ```bash
-  chmod +x hello.sh
-  ```
-- **Explanation**:
-  - `chmod +x` adds the executable permission.
-  - If you don’t want others to read or execute the script, use:
-    ```bash
-    chmod 700 hello.sh
-    ```
+This special sequence is called the sha-bang, and it tells the system to execute this code as a
+BASH script.
 
-### 2.3 Running the Script
-- **Objective**: Execute the shell script.
-- **Commands**:
-  - If the script is in the current directory:
-    ```bash
-    ./hello.sh
-    ```
-  - If the script is in a directory in the PATH:
-    ```bash
-    hello.sh
-    ```
-  - Using the full path:
-    ```bash
-    /home/user/scripts/hello.sh
-    ```
+Comments in a BASH script start with a # character and extend to the end of the line.
+For example:
 
----
+```bash
+echo "hello world" #prints "hello" to the screen
+```
 
-## 3. Quoting and Literals
+As shown in the preceding example, you can use the echo command to display information to
+the user who is running a program. The arguments to the echo command can contain any text
+data and can also include the value of a variable:
 
-### 3.1 Understanding Quotes
-- **Objective**: Learn when to use quotes.
-- **Types of Quotes**:
-  - **Single Quotes** (`'`): Preserve literal value (no variable expansion).
-    ```sh
-    echo '$HOME'  # Output: $HOME
-    ```
-  - **Double Quotes** (`"`): Allow variable expansion.
-    ```sh
-    echo "$HOME"  # Output: /home/username
-    ```
-  - **Backslash** (`\`): Escape a single character.
-    ```sh
-    echo "He said, \"Hello!\""
-    ```
-  - **No Quotes**: Words are split at spaces and tabs.
-    ```sh
-    echo $HOME
-    ```
+```bash
+echo "The answer is $result"
+```
 
-### 3.2 Special Cases
-- **Escape a Single Quote**:
-  - Using double quotes:
-    ```sh
-    echo "It's a beautiful day!"
-    ```
-  - Using backslash:
-    ```sh
-    echo 'It'\''s a beautiful day!'
-    ```
+After creating your BASH script and saving it, you then make it executable:
+```bash
+[student@OCS ~]$ more hello.sh
+#!/bin/bash
+#hello.sh
+echo "hello world!"
+```
 
----
+```bash
+[student@OCS ~]$ chmod a+x hello.sh
+```
 
-## 4. Special Variables
+Now it can be run as a program by using the following syntax:
+```bash
+[student@OCS ~]$ ./hello.sh
+hello world!
+```
 
-### 4.1 Using Script Arguments
-- **Objective**: Access arguments passed to the script.
-- **Special Variables**:
-  - `$1`, `$2`, ... : Individual arguments.
-  - `$#`: Number of arguments.
-  - `$@`: All arguments.
-  - `$0`: Script name.
-- **Example**:
-  ```sh
-  #!/bin/sh
-  echo "Script name: $0"
-  echo "First argument: $1"
-  echo "All arguments: $@"
-  echo "Number of arguments: $#"
-  ```
-- **Running the Script**:
-  ```bash
-  ./script.sh one two three
-  ```
-- **Output**:
-  ```
-  Script name: ./script.sh
-  First argument: one
-  All arguments: one two three
-  Number of arguments: 3
-  ```
+Note the need to place ./ before the name of the command. This is because the command
+might not be in one of the directories specified by the $PATH variable:
 
-### 4.2 Exit Codes
-- **Objective**: Understand exit codes.
-- **Explanation**:
-  - `$?`: Holds the exit code of the last executed command.
-  - `0`: Success.
-  - Non-zero: Error.
-- **Example**:
-  ```sh
-  ls /not_exist_dir
-  echo "Exit code: $?"
-  ```
+```bash
+[student@OCS ~]$ echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/
+games
+```
 
----
+To avoid the need to include ./ whenever you want to run your script, you can modify the
+$PATH variable to include the directory in which your script is stored. Typically, regular users
+create a “bin” directory in their home directory and place scripts in this location:
 
-## 5. Conditionals
+```bash
+[student@OCS ~]$ mkdir bin
+[student@OCS ~]$ cp hello.sh bin
+[student@OCS ~]$ PATH="$PATH:/home/student/bin"
+[student@OCS ~]$ hello.sh
+hello world!
+```
 
-### 5.1 Using `if` Statements
-- **Objective**: Execute commands conditionally.
-- **Syntax**:
-  ```sh
-  if [ condition ]; then
-    # commands if true
-  else
-    # commands if false
-  fi
-  ```
-- **Example**:
-  ```sh
-  #!/bin/sh
-  if [ -f "$1" ]; then
-    echo "File exists."
-  else
-    echo "File does not exist."
-  fi
-  ```
-- **Explanation**:
-  - `-f`: Checks if the file exists.
 
-### 5.2 Using `case` Statements
-- **Objective**: Match a variable against patterns.
-- **Syntax**:
-  ```sh
-  case $1 in
-    start) echo "Starting...";;
-    stop) echo "Stopping...";;
-    *) echo "Unknown command.";;
-  esac
-  ```
+In addition to the built-in variables that were discussed in Chapter 4, variables are available in
+BASH scripts that represent the arguments being passed into the script. For example, consider
+the following execution of a script called test.sh:
+```bash
+[student@OCS ~]$ test.sh Bob Sue Ted
+```
 
----
+The values “Bob,” “Sue,” and “Ted” are assigned to variables within the script. The first argument
+(“Bob”) is assigned to the $1 variable, the second argument is assigned to the $2 variable,
+and so on. Additionally, all arguments collectively are assigned to the $@ variable.
+For additional details regarding these positional parameters variables, or anything related the
+BASH scripting, consult the man page for bash:
 
-## 6. Loops
+```bash
+[student@OCS ~]$ man bash
+```
 
-### 6.1 `for` Loops
-- **Objective**: Iterate over a list of items.
-- **Syntax**:
-  ```sh
-  for var in item1 item2 item3; do
-    echo $var
-  done
-  ```
-- **Example**:
-  ```sh
-  for file in *.txt; do
-    echo "Processing $file..."
-  done
-  ```
+# Conditional Expressions
 
-### 6.2 `while` Loops
-- **Objective**: Repeat commands while a condition is true.
-- **Syntax**:
-  ```sh
-  while [ condition ]; do
-    # commands
-  done
-  ```
-- **Example**:
-  ```sh
-  i=1
-  while [ $i -le 5 ]; do
-    echo "Count: $i"
-    i=$((i+1))
-  done
-  ```
+Several conditional statements are available for the BASH shell, including the if statement:
+```bash
+if [ cond ]
+then
+statements
+elif [ cond ]
+then
+statement
+else
+statements
+fi
+```
 
----
+Note the following:
+- An else if is spelled elif and is optional.
+- After the if and elif, you need a then statement. However, after an else, do not
+include a then statement.
+- End the if statement with the word if spelled backwards: fi
 
-## 7. Command Substitution
 
-### 7.1 Using Command Output in Scripts
-- **Objective**: Capture the output of a command.
-- **Syntax**:
-  ```sh
-  var=$(command)
-  ```
-- **Example**:
-  ```sh
-  DATE=$(date)
-  echo "Today is $DATE"
-  ```
+### Sample if statement
 
----
+```bash
+#!/bin/bash
+#if.sh
+color=$1
+if [ "$color" = "blue" ]
+then
+echo "it is blue"
+elif [ "$color" = "red" ]
+then
+echo "it is red"
+else
+echo "no idea what this color is"
+fi
+```
 
-## 8. Practical Exercises
+## Quoting variables
+Get in the habit of putting double quotes around your variables in BASH scripts. This is
+important in the event the variable hasn’t been assigned a value. For example, suppose the
+script in Listing 8.1 was execute with no arguments. The result would be that the color variable
+is unassigned and the resulting conditional statement would be if [ "" = "blue" ]
+The result would be false, but without the quotes around $color, the result would be an
+error message and the script would exit immediately. This is because the resulting conditional
+statement would be missing one of its key components after the value of $color has been
+returned: if [ = "blue" ]
 
-### Exercise 1: Writing and Running a Script
-1. Create a script that prints the current date and lists all files in the home directory.
-2. Make the script executable and run it.
+This syntax performs an implicit call of a BASH command named test that you can use to
+perform several comparison tests. This can include integer (numeric) comparisons, string comparisons,
+and file testing operations.1 For example, use the following syntax to test whether the string
+value that is stored in the $name1 variable does not equal the string stored in the $name2 variable:
+```bash
+[ "$name1" != "$name2" ]
+```
 
-### Exercise 2: Using Conditionals and Loops
-1. Write a script that checks if a file exists.
-2. If the file exists, print its contents line by line using a `while` loop.
+### Important Note
+The spacing around the square brackets is very important. There should be a space before and
+after each square bracket. Without these, an error message occurs.
 
-### Exercise 3: Command Substitution and Variables
-1. Write a script that captures the output of the `df -h` command.
-2. Display the disk usage for each mounted filesystem.
+In addition to determining whether two strings are equal or not equal to each other, you might
+also find the -n option useful.2 This option determines whether a string is not empty, which is
+useful when testing user input.
+
+### Testing user input
+
+```bash
+[student@OCS ~]$ more name.sh
+#!/bin/bash
+#name.sh
+echo "Enter your name"
+read name
+if [ -n "$name" ]
+then
+echo "Thank you!"
+else
+echo "hey, you didn't give a name!"
+fi
+[student@OCS ~]$./name.sh
+Enter your name
+
+Bo
+Thank you!
+[student@OCS ~]$./name.sh
+Enter your name
+hey, you didn't give a name!
+```
+### Integer Comparisons
+
+If you want to perform integer (numeric) comparison operations, use the following:
+- -eq True if values are equal to each other.
+- -ne True if values are not equal to each other.
+- -gt True if first value is greater than second value.
+- -lt True if first value is less than second value.
+- -ge True if first value is greater than or equal to second value.
+- -le True if first value is less than or equal to second value.
+
+### File Test Comparisons
+
+You can also perform test operations on files and directories to determine information about
+their status. These operations include:
+
+- -d True if “file” is a directory.
+- -f True if “file” is a regular file.
+- -r True if “file” exists and is readable by the user running the script.
+- -w True if “file” exists and is writable by the user running the script.
+- -x True if “file” exists and is executable by the user running the script.
+- -L True if “first” value is less than or equal to second value.
+
+# Flow Control Statements
+In addition to if statements, the BASH scripting language has several other flow
+control statements:
+
+The while loop—Executes a block of code repeatedly as long as the conditional
+statement is true.
+- The until loop—Executes a block of code repeatedly as long as the conditional
+statement is false. Essentially the opposite of a while loop.
+- The case statement—Similar to an if statement but provides an easier branching
+method for multiple situations.
+- The for loop—Executes a block of code for each item of a list of values.
+
+## The while loop
+The following code segment prompts the user for a five-digit number. If the user complies, the
+program will continue because the condition of the while loop will be false. However, if the
+user provides incorrect data, the condition of the while loop will be true and the user will be
+prompted for the correct data again:
+
+```bash
+echo "Enter a five-digit ZIP code: "
+read ZIP
+while echo $ZIP | egrep -v "^[0-9]{5}$" > /dev/null 2>&1
+do
+echo "You must enter a valid ZIP code – five digits only!"
+echo "Enter a five-digit ZIP code: "
+read ZIP
+done
+echo "Thank you"
+```
+The `egrep` command from the previous example may be a bit tricky to understand. To begin
+with, the regular expression pattern is matching a value that is exactly five digits. The –v
+option is used to return a value if the pattern is not found. So, if $ZIP contains a valid
+five-digit number, then egrep returns a false result because it is trying to find lines that don’t
+contain a five-digit number. The egrep command returns a true result if the $ZIP contains
+something besides a five-digit number.
+
+Why the > /dev/null 2>&1? Because we don’t want to display anything from the egrep
+command, just make use of its true/false return value. All OS commands return true or false3
+when executed, and that is what is needed here. Any STDOUT or STDERR from the command is
+unnecessary and only serves to confuse matters if it is displayed to the user.
+
+## The for Loop
+
+A for loop enables you to perform an operation on a set of items. For example, the following
+command, when run as the root user, creates five user accounts:
+```bash
+for person in bob ted sue nick fred
+do
+useradd $person
+done
+```
+
+### Loop Control
+Like most languages, BASH scripting provides a way to prematurely exit a loop or to stop the
+current iteration of a loop and start a new iteration of a loop. Use the break command to
+immediately exit a while, until, or for loop. Use the continue command to stop the current
+iteration of a while, until, or for loop and start the next iteration.
+
+# The case Statement
+A case statement is designed for when you want to perform multiple conditional checks.
+Although you could use an if statement with multiple elif statements, the syntax of
+if/elif/else is often more cumbersome than a case statement.
+```bash
+The syntax for a case statement is:
+case var in
+cond1) cmd
+cmd;;
+cond2) cmd
+cmd;;
+esac
+```
+
+For the preceding syntax example, var represents a variable’s value that you want to
+conditionally check. For example, consider the following code:
+```bash
+name="bob"
+case $name in
+ted) echo "it is ted";;
+bob) echo "it is bob";;
+*) echo "I have no idea who you are"
+esac
+```
+
+The “condition” is a pattern that uses the same matching rules as file wildcards. An * matches
+zero or more of any character, a ? matches a single character, and you can use square brackets
+to match a single character of a specific range. You can also use a |character to represent “or.”
+For example:
+
+```bash
+answer=yes
+case $answer in
+y|ye[sp]) echo "you said yes";;
+n|no|nope) echo "you said no";;
+*) echo "bad response";;
+esac
+```
+
+# User Interaction
+Using actual user input, which the read statement can gather, would make more sense:
+
+```bash
+read answer
+```
+The read statement prompts the user to provide information and reads that data (technically
+from STDIN) into a variable that is specified as the argument to the read statement. 
+
+```bash
+read answer
+case $answer in
+y|ye[sp]) echo "you said yes";;
+n|no|nope) echo "you said no";;
+*) echo "bad response";;
+esac
+```

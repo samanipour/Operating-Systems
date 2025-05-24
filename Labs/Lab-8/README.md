@@ -139,7 +139,7 @@ fi
 ## Quoting variables
 Get in the habit of putting double quotes around your variables in BASH scripts. This is
 important in the event the variable hasn’t been assigned a value. For example, suppose the
-script in Listing 8.1 was execute with no arguments. The result would be that the color variable
+script in the example was execute with no arguments. The result would be that the color variable
 is unassigned and the resulting conditional statement would be if [ "" = "blue" ]
 The result would be false, but without the quotes around $color, the result would be an
 error message and the script would exit immediately. This is because the resulting conditional

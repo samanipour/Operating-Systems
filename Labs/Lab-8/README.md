@@ -80,7 +80,7 @@ hello world!
 ```
 
 
-In addition to the built-in variables that were discussed in Chapter 4, variables are available in
+In addition to the built-in variables that were discussed , variables are available in
 BASH scripts that represent the arguments being passed into the script. For example, consider
 the following execution of a script called test.sh:
 ```bash

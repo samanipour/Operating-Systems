@@ -148,7 +148,7 @@ returned: if [ = "blue" ]
 
 This syntax performs an implicit call of a BASH command named test that you can use to
 perform several comparison tests. This can include integer (numeric) comparisons, string comparisons,
-and file testing operations.1 For example, use the following syntax to test whether the string
+and file testing operations. For example, use the following syntax to test whether the string
 value that is stored in the $name1 variable does not equal the string stored in the $name2 variable:
 ```bash
 [ "$name1" != "$name2" ]
@@ -159,7 +159,7 @@ The spacing around the square brackets is very important. There should be a spac
 after each square bracket. Without these, an error message occurs.
 
 In addition to determining whether two strings are equal or not equal to each other, you might
-also find the -n option useful.2 This option determines whether a string is not empty, which is
+also find the -n option useful.This option determines whether a string is not empty, which is
 useful when testing user input.
 
 ### Testing user input

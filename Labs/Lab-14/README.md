@@ -1,254 +1,252 @@
-# Lab-11: Network File Transfer and Sharing
+# Lab-9: Network Applications and Services
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Overview
-- This manual covers methods for distributing and sharing files over a network, including:
-  - Temporary file sharing using Python’s SimpleHTTPServer.
-  - File synchronization with `rsync`.
-  - File sharing with Samba for Windows-Linux interoperability.
-  - Mounting remote filesystems using SSHFS and NFS.
+- This manual explains the configuration and management of network applications and services in Linux.
 - By the end of this lab, students will be able to:
-  - Set up temporary and persistent file-sharing solutions.
-  - Securely mount remote filesystems on a local machine.
-  - Troubleshoot common file-sharing issues.
+  - Understand the basics of network services.
+  - Configure network servers such as SSH.
+  - Use diagnostic tools to troubleshoot network issues.
+  - Understand network security and sockets.
 
 ---
 
-## 2. Temporary File Sharing with Python SimpleHTTPServer
+## 2. The Basics of Services
 
-### 2.1 Starting a Temporary HTTP Server
-- **Objective**: Quickly share files from a directory using HTTP.
-- **Commands**:
-  - Using Python 3:
-    ```bash
-    python3 -m http.server 8080
-    ```
-  - Using Python 2 (if applicable):
-    ```bash
-    python -m SimpleHTTPServer 8080
-    ```
+### 2.1 Understanding TCP Services
+- **Objective**: Explore how TCP services work using telnet.
 - **Explanation**:
-  - This starts an HTTP server in the current directory on port 8080.
-  - Files in this directory are accessible from other devices on the network by navigating to:
-    ```
-    http://<your_ip>:8080
-    ```
-  - Replace `<your_ip>` with your machine’s IP address, which can be found using:
-    ```bash
-    ip addr show
-    ```
+  - TCP services provide uninterrupted two-way data streams.
+  - HTTP (Hypertext Transfer Protocol) uses TCP port 80 for communication.
 
-### 2.2 Stopping the HTTP Server
-- **Objective**: Stop the temporary HTTP server.
+### 2.2 Using `telnet` to Connect to a Web Server
+- **Objective**: Manually connect to a web server using TCP.
+- **Commands**:
+  ```bash
+  telnet example.org 80
+  ```
 - **Steps**:
-  - Press `CTRL+C` in the terminal where the server is running.
-  - Alternatively, find and kill the process:
-    ```bash
-    ps aux | grep http.server
-    sudo kill <PID>
-    ```
-
----
-
-## 3. Distributing Files with `rsync`
-
-### 3.1 Installing `rsync`
-- **Objective**: Install `rsync` on both local and remote machines.
-- **Commands**:
-  - For Debian/Ubuntu:
-    ```bash
-    sudo apt install rsync
-    ```
-  - For CentOS/Red Hat:
-    ```bash
-    sudo yum install rsync
-    ```
-
-### 3.2 Using `rsync` for Local Backups
-- **Objective**: Sync files between local directories.
-- **Commands**:
-  ```bash
-  rsync -av --delete /source/directory/ /backup/directory/
-  ```
-- **Explanation**:
-  - `-a`: Archive mode (preserves permissions, symlinks, etc.).
-  - `-v`: Verbose output.
-  - `--delete`: Deletes files in the destination that are not in the source.
-
-### 3.3 Syncing Files Over SSH
-- **Objective**: Sync files to a remote server over SSH.
-- **Commands**:
-  ```bash
-  rsync -av -e ssh /local/directory/ user@remote_host:/remote/directory/
-  ```
-- **Explanation**:
-  - `-e ssh`: Uses SSH as the transport protocol.
-  - Ensure SSH access to the remote machine is set up.
-
-### 3.4 Using `rsync` for Incremental Backups
-- **Objective**: Perform incremental backups to save bandwidth and time.
-- **Commands**:
-  ```bash
-  rsync -av --link-dest=/previous/backup/ /source/directory/ /new/backup/
-  ```
-- **Explanation**:
-  - `--link-dest`: Links unchanged files to save space.
-
----
-
-## 4. File Sharing with Samba
-
-### 4.1 Installing Samba
-- **Objective**: Install Samba on a Linux server for sharing files with Windows clients.
-- **Commands**:
-  - On Debian/Ubuntu:
-    ```bash
-    sudo apt install samba
-    ```
-  - On CentOS/Red Hat:
-    ```bash
-    sudo yum install samba samba-common
-    ```
-
-### 4.2 Configuring a Samba Share
-- **Objective**: Share a directory with Windows clients.
-- **Steps**:
-  1. Edit the Samba configuration file:
+  1. Open a terminal.
+  2. Connect to the IANA example web server on TCP port 80:
       ```bash
-      sudo nano /etc/samba/smb.conf
+      telnet example.org 80
       ```
-  2. Add the following configuration:
-      ```ini
-      [SharedFiles]
-      path = /path/to/shared/directory
-      browseable = yes
-      writable = yes
-      guest ok = no
-      valid users = username
+  3. Once connected, type the following:
       ```
-  3. Save and exit the editor.
-
-### 4.3 Setting Permissions and Creating Samba User
-- **Objective**: Set permissions and create a Samba user.
-- **Commands**:
-  - Set directory permissions:
-    ```bash
-    sudo chown -R username:username /path/to/shared/directory
-    sudo chmod -R 775 /path/to/shared/directory
-    ```
-  - Create a Samba user:
-    ```bash
-    sudo smbpasswd -a username
-    ```
-  - Enable and start the Samba service:
-    ```bash
-    sudo systemctl enable smbd
-    sudo systemctl start smbd
-    ```
-
-### 4.4 Accessing the Samba Share from Windows
-- **Objective**: Connect to the Samba share from a Windows client.
-- **Steps**:
-  1. Open File Explorer.
-  2. In the address bar, enter:
+      GET / HTTP/1.1
+      Host: example.org
       ```
-      \\<server_ip>\SharedFiles
-      ```
-  3. Enter the Samba username and password when prompted.
+      (Press ENTER twice)
+  4. Observe the HTML response from the server.
+  5. Terminate the connection:
+      - Press `CTRL+D`
 
 ---
 
-## 5. Mounting Remote Filesystems with SSHFS
+## 3. A Closer Look with `curl`
 
-### 5.1 Installing SSHFS
-- **Objective**: Install SSHFS on the client machine.
-- **Commands**:
-  - On Debian/Ubuntu:
-    ```bash
-    sudo apt install sshfs
-    ```
-
-### 5.2 Mounting a Remote Directory
-- **Objective**: Mount a remote directory over SSH.
+### 3.1 Using `curl` to Communicate with HTTP Servers
+- **Objective**: Examine HTTP communication using `curl`.
 - **Commands**:
   ```bash
-  mkdir ~/remote_mount
-  sshfs user@remote_host:/remote/directory ~/remote_mount
+  curl --trace-ascii trace_file http://www.example.org/
   ```
-- **Explanation**:
-  - `user@remote_host`: The SSH username and hostname/IP of the remote machine.
-  - `~/remote_mount`: Local mount point.
-
-### 5.3 Unmounting the SSHFS Directory
-- **Objective**: Unmount the SSHFS filesystem.
-- **Commands**:
-  ```bash
-  fusermount -u ~/remote_mount
-  ```
+- **Steps**:
+  1. Install `curl` if not already installed:
+      ```bash
+      sudo apt install curl
+      ```
+  2. Send a request to the web server:
+      ```bash
+      curl --trace-ascii trace_file http://www.example.org/
+      ```
+  3. Open the trace file to view the request and response:
+      ```bash
+      cat trace_file
+      ```
+  4. Observe the request headers and server response.
 
 ---
 
-## 6. Sharing Files with NFS
+## 4. Network Servers
 
-### 6.1 Installing NFS
-- **Objective**: Install NFS on both server and client.
+### 4.1 Secure Shell (SSH)
+
+#### 4.1.1 Installing and Enabling SSH Server
+- **Objective**: Install and enable OpenSSH server.
 - **Commands**:
-  - On Debian/Ubuntu:
+  - Install SSH server:
     ```bash
-    sudo apt install nfs-kernel-server nfs-common
+    sudo apt install openssh-server
     ```
-  - On CentOS/Red Hat:
+  - Enable and start the SSH service:
     ```bash
-    sudo yum install nfs-utils
+    sudo systemctl enable ssh
+    sudo systemctl start ssh
+    ```
+  - Verify the SSH service status:
+    ```bash
+    sudo systemctl status ssh
     ```
 
-### 6.2 Configuring NFS Exports
-- **Objective**: Configure NFS exports on the server.
+#### 4.1.2 Configuring SSH Server
+- **Objective**: Modify SSH server settings for secure access.
 - **Steps**:
-  1. Edit the NFS exports file:
+  1. Edit the SSH configuration file:
       ```bash
-      sudo nano /etc/exports
+      sudo nano /etc/ssh/sshd_config
       ```
-  2. Add the following line:
-      ```
-      /path/to/share client_ip(rw,sync,no_subtree_check)
-      ```
-  3. Save and exit the editor.
-  4. Restart the NFS service:
+  2. Recommended settings:
+      - Disable root login:
+        ```
+        PermitRootLogin no
+        ```
+      - Specify allowed users:
+        ```
+        AllowUsers username
+        ```
+  3. Save and close the file.
+  4. Restart SSH to apply changes:
       ```bash
-      sudo systemctl restart nfs-kernel-server
+      sudo systemctl restart ssh
       ```
 
-### 6.3 Mounting NFS Shares on the Client
-- **Objective**: Mount the NFS share on the client.
+#### 4.1.3 Connecting to SSH Server
+- **Objective**: Connect to the SSH server using the client.
 - **Commands**:
   ```bash
-  sudo mount server_ip:/path/to/share /local/mount/point
+  ssh username@hostname
   ```
-  - To make it persistent, add the following line to `/etc/fstab`:
+- **Example**:
+  ```bash
+  ssh user@example.org
+  ```
+
+### 4.2 Using `fail2ban` for SSH Security
+- **Objective**: Protect SSH server from brute-force attacks.
+- **Commands**:
+  - Install fail2ban:
+    ```bash
+    sudo apt install fail2ban
     ```
-    server_ip:/path/to/share /local/mount/point nfs defaults 0 0
+  - Enable and start fail2ban:
+    ```bash
+    sudo systemctl enable fail2ban
+    sudo systemctl start fail2ban
+    ```
+  - View fail2ban status:
+    ```bash
+    sudo fail2ban-client status
+    ```
+  - View SSH jail status:
+    ```bash
+    sudo fail2ban-client status sshd
+    ```
+
+---
+
+## 5. Diagnostic Tools
+
+### 5.1 Using `lsof` to List Open Files and Ports
+- **Objective**: List open network ports and connections.
+- **Commands**:
+  - List all open ports:
+    ```bash
+    sudo lsof -i
+    ```
+  - List open ports for a specific service:
+    ```bash
+    sudo lsof -i :22
+    ```
+
+### 5.2 Using `tcpdump` for Packet Analysis
+- **Objective**: Capture and analyze network packets.
+- **Commands**:
+  - Install `tcpdump`:
+    ```bash
+    sudo apt install tcpdump
+    ```
+  - Capture packets on a network interface:
+    ```bash
+    sudo tcpdump -i enp0s3
+    ```
+  - Capture packets on a specific port:
+    ```bash
+    sudo tcpdump -i enp0s3 port 80
+    ```
+
+### 5.3 Using `netcat` for Network Connections
+- **Objective**: Create network connections and send data.
+- **Commands**:
+  - Start a listener on a port:
+    ```bash
+    nc -l 1234
+    ```
+  - Connect to the listener:
+    ```bash
+    nc <host-ip> 1234
+    ```
+
+### 5.4 Port Scanning with `nmap`
+- **Objective**: Scan a network for open ports.
+- **Commands**:
+  - Install `nmap`:
+    ```bash
+    sudo apt install nmap
+    ```
+  - Scan a host for open ports:
+    ```bash
+    nmap <host-ip>
+    ```
+  - Perform a detailed scan:
+    ```bash
+    nmap -A <host-ip>
+    ```
+
+---
+
+## 6. Network Security
+
+### 6.1 Identifying Vulnerabilities
+- **Objective**: Identify common network vulnerabilities.
+- **Types of Vulnerabilities**:
+  - Direct attacks (e.g., buffer overflow).
+  - Cleartext password sniffing.
+  - Unauthenticated services.
+
+### 6.2 Securing Network Services
+- **Objective**: Harden network services against attacks.
+- **Best Practices**:
+  - Disable unnecessary services:
+    ```bash
+    sudo systemctl disable service_name
+    ```
+  - Use SSH instead of Telnet.
+  - Apply firewall rules:
+    ```bash
+    sudo ufw enable
+    sudo ufw allow ssh
+    sudo ufw deny telnet
     ```
 
 ---
 
 ## 7. Practical Exercises
 
-### Exercise 1: Temporary File Sharing
-1. Start a temporary HTTP server using Python.
-2. Access the shared files from another device on the network.
+### Exercise 1: Connecting to a Web Server
+1. Connect to a web server using `telnet`.
+2. Send a GET request manually.
+3. Observe the server response.
 
-### Exercise 2: Synchronizing Files with `rsync`
-1. Sync files from a local directory to a remote server.
-2. Perform an incremental backup.
+### Exercise 2: Configuring and Using SSH
+1. Install and enable OpenSSH server.
+2. Secure the SSH server by disabling root login.
+3. Connect to the SSH server from another machine.
 
-### Exercise 3: Setting Up a Samba Share
-1. Configure a Samba share.
-2. Access the share from a Windows client.
-
-### Exercise 4: Mounting Remote Filesystems
-1. Mount a remote directory using SSHFS.
-2. Unmount the directory and verify the changes.
+### Exercise 3: Using Diagnostic Tools
+1. Monitor open ports with `lsof`.
+2. Capture network packets using `tcpdump`.
+3. Perform a network scan with `nmap`.

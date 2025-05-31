@@ -1,262 +1,270 @@
-# Lab 7: A Closer Look at Processes and Resource Utilization
+# Lab-6: System Configuration: Logging, System Time, Batch Jobs, and Users
 
 ---
 
-## 1. Introduction
+## 1. System Logging
 
-### 1.1 Overview
-- In Linux, processes compete for system resources such as CPU, memory, and I/O.
-- The kernel manages resource allocation to maintain system stability and performance.
-- This manual covers:
-  - Tracking processes
-  - Viewing open files
-  - Tracing program execution
-  - Monitoring resource utilization
-  - Managing control groups (cgroups)
-
----
-
-## 2. Tracking Processes
-
-### 2.1 Using `ps` to List Processes
-- **Objective**: View running processes and their details.
+### 1.1 Checking Your Log Setup
+- **Objective**: Inspect the system’s logging setup.
 - **Commands**:
-  - List all running processes:
+  - Check if `journald` is active:
     ```bash
-    ps -ef
+    journalctl
     ```
-  - View a tree of processes:
+  - Check for `rsyslogd`:
     ```bash
-    ps -e --forest
+    ps aux | grep rsyslogd
+    ls /etc/rsyslog.conf
     ```
-  - Display detailed information:
+  - Check for `syslog-ng`:
     ```bash
-    ps aux
+    ls /etc/syslog-ng
+    ```
+  - View logs in `/var/log`:
+    ```bash
+    ls /var/log
     ```
 
-### 2.2 Monitoring Processes with `top`
-- **Objective**: Monitor real-time system performance and resource usage.
+### 1.2 Searching and Monitoring Logs
+- **Objective**: Search and monitor log messages.
 - **Commands**:
-  - Start the `top` interface:
+  - View all logs:
     ```bash
-    top
+    journalctl
     ```
-  - Useful shortcuts:
-    - `P`: Sort by CPU usage
-    - `M`: Sort by memory usage
-    - `T`: Sort by running time
-    - `k`: Kill a process
-    - `q`: Quit `top`
-
-### 2.3 Advanced Monitoring with `htop`
-- **Objective**: Use an enhanced version of `top` with a user-friendly interface.
-- **Commands**:
-  - Install `htop`:
+  - Search by process ID:
     ```bash
-    sudo apt install htop
+    journalctl _PID=<pid>
     ```
-  - Launch `htop`:
+  - Filter logs by time:
     ```bash
-    htop
+    journalctl -S -4h
+    journalctl -S '2020-01-14 14:30:00'
     ```
-  - Navigate using arrow keys, and use `F9` to kill processes.
-
----
-
-## 3. Finding Open Files with `lsof`
-
-### 3.1 Viewing Open Files
-- **Objective**: List all open files by processes.
-- **Commands**:
-  - List all open files:
+  - Monitor logs in real-time:
     ```bash
-    sudo lsof
-    ```
-  - View files opened by a specific user:
-    ```bash
-    sudo lsof -u username
-    ```
-  - View files opened by a specific process:
-    ```bash
-    sudo lsof -p PID
-    ```
-  - Display open network connections:
-    ```bash
-    sudo lsof -i
+    journalctl -f
     ```
 
-### 3.2 Monitoring File Access in Real-Time
-- **Objective**: Monitor file access activity.
-- **Commands**:
-  - Monitor access to a file or directory:
-    ```bash
-    sudo watch -n 1 'lsof /path/to/directory'
-    ```
-
----
-
-## 4. Tracing Program Execution and System Calls
-
-### 4.1 Using `strace` to Trace System Calls
-- **Objective**: Trace system calls made by a program.
-- **Commands**:
-  - Trace a program's system calls:
-    ```bash
-    strace -o output.txt -e trace=all ./program_name
-    ```
-  - Trace a running process by PID:
-    ```bash
-    sudo strace -p PID
-    ```
-  - Display network-related system calls:
-    ```bash
-    sudo strace -e trace=network ./program_name
-    ```
-
-### 4.2 Using `ltrace` to Trace Library Calls
-- **Objective**: Trace library calls made by a program.
-- **Commands**:
-  - Trace library function calls:
-    ```bash
-    ltrace ./program_name
-    ```
-  - Log the output to a file:
-    ```bash
-    ltrace -o ltrace_output.txt ./program_name
-    ```
-
----
-
-## 5. Threads
-
-### 5.1 Understanding Threads
-- **Objective**: Identify single-threaded and multithreaded processes.
+### 1.3 Logfile Rotation
+- **Objective**: Manage logfiles using log rotation.
 - **Explanation**:
-  - **Single-threaded**: One execution flow per process.
-  - **Multithreaded**: Multiple execution flows within a single process.
-
-### 5.2 Viewing Threads with `ps` and `top`
+  - `logrotate` rotates logfiles to prevent them from consuming too much storage.
+  - Example of rotated files:
+    ```
+    auth.log -> auth.log.1 -> auth.log.2.gz -> auth.log.3.gz
+    ```
 - **Commands**:
-  - Display threads with `ps`:
+  - Force log rotation:
     ```bash
-    ps -eLf
+    sudo logrotate -f /etc/logrotate.conf
     ```
-  - Show threads in `top`:
-    - Press `H` in the `top` interface.
+  - Check the log rotation status:
+    ```bash
+    sudo logrotate -d /etc/logrotate.conf
+    ```
 
----
-
-## 6. Monitoring Resource Utilization
-
-### 6.1 Monitoring CPU Usage
-- **Objective**: Check CPU utilization.
+### 1.4 Journal Maintenance
+- **Objective**: Manage systemd journal logs.
 - **Commands**:
-  - Using `top` or `htop`.
-  - Using `mpstat` (from the `sysstat` package):
+  - View journal size:
     ```bash
-    sudo apt install sysstat
-    mpstat -P ALL 2
+    journalctl --disk-usage
     ```
-
-### 6.2 Monitoring Memory Usage
-- **Objective**: View memory usage statistics.
-- **Commands**:
-  - Using `free`:
+  - Clear journal logs older than 7 days:
     ```bash
-    free -h
+    sudo journalctl --vacuum-time=7d
     ```
-  - Using `vmstat`:
+  - Limit the journal size:
     ```bash
-    vmstat 2
-    ```
-
-### 6.3 Monitoring Disk Usage
-- **Objective**: Check disk space and I/O performance.
-- **Commands**:
-  - Check disk space:
-    ```bash
-    df -h
-    ```
-  - Monitor disk I/O:
-    ```bash
-    iostat -xz 2
-    ```
-
-### 6.4 Monitoring Network Usage
-- **Objective**: Monitor network traffic and connections.
-- **Commands**:
-  - Using `ss`:
-    ```bash
-    ss -tunap
-    ```
-  - Using `iftop` (must be installed):
-    ```bash
-    sudo apt install iftop
-    sudo iftop
+    sudo journalctl --vacuum-size=100M
     ```
 
 ---
 
-## 7. Control Groups (cgroups)
+## 2. The Structure of /etc
 
-### 7.1 Overview
-- **Objective**: Manage resource allocation using cgroups.
+### 2.1 Understanding /etc Directory
+- **Objective**: Explore the `/etc` directory structure.
 - **Explanation**:
-  - **cgroups** limit and isolate resource usage for processes.
-  - Versions:
-    - **cgroup v1**: Hierarchical resource management.
-    - **cgroup v2**: Unified resource management.
+  - `/etc`: Contains system configuration files.
+  - Subdirectories organize configuration files for different services.
+  - Example:
+    ```bash
+    ls -F /etc
+    ```
+    This lists all directories and files in `/etc`, where most items are now subdirectories.
 
-### 7.2 Viewing cgroups
-- **Commands**:
-  - List all cgroups:
+### 2.2 Customizing Configuration
+- **Objective**: Customize system configuration.
+- **Steps**:
+  1. Locate the configuration file, e.g., `/etc/systemd/system`.
+  2. Edit using a text editor:
     ```bash
-    cat /proc/cgroups
+    sudo nano /etc/systemd/system/example.service
     ```
-  - Display a process’s cgroup membership:
+  3. Save changes and reload systemd:
     ```bash
-    cat /proc/<PID>/cgroup
-    ```
-
-### 7.3 Creating and Managing cgroups
-- **Objective**: Create and manage cgroups manually.
-- **Commands**:
-  - Create a cgroup:
-    ```bash
-    sudo cgcreate -g cpu,memory:/my_cgroup
-    ```
-  - Limit CPU usage:
-    ```bash
-    sudo cgset -r cpu.shares=512 my_cgroup
-    ```
-  - Add a process to the cgroup:
-    ```bash
-    sudo cgclassify -g cpu,memory:/my_cgroup <PID>
-    ```
-
-### 7.4 Viewing Resource Utilization in cgroups
-- **Commands**:
-  - Check CPU usage:
-    ```bash
-    cat /sys/fs/cgroup/cpu/my_cgroup/cpuacct.usage
-    ```
-  - Check memory usage:
-    ```bash
-    cat /sys/fs/cgroup/memory/my_cgroup/memory.usage_in_bytes
+    sudo systemctl daemon-reload
     ```
 
 ---
 
-## 8. Practical Exercises
+## 3. User Management Files
 
-### Exercise 1: Monitoring Processes
-1. Use `ps`, `top`, and `htop` to monitor system processes.
-2. Sort by CPU and memory usage.
+### 3.1 The /etc/passwd File
+- **Objective**: Understand and manage user information.
+- **Explanation**:
+  - `/etc/passwd` maps usernames to user IDs (UIDs).
+  - Format:
+    ```
+    username:x:UID:GID:Full Name:Home Directory:Shell
+    ```
+- **Commands**:
+  - View the `/etc/passwd` file:
+    ```bash
+    cat /etc/passwd
+    ```
 
-### Exercise 2: Using lsof and strace
-1. List open files by a specific user with `lsof`.
-2. Trace system calls of a program using `strace`.
+### 3.2 The /etc/shadow File
+- **Objective**: Manage user passwords.
+- **Explanation**:
+  - `/etc/shadow` stores encrypted user passwords.
+  - Only accessible by the root user for security.
+- **Commands**:
+  - View the `/etc/shadow` file:
+    ```bash
+    sudo cat /etc/shadow
+    ```
 
-### Exercise 3: Creating and Managing cgroups
-1. Create a cgroup to limit CPU usage.
-2. Add a process to the cgroup and monitor its resource usage.
+### 3.3 Manipulating Users and Passwords
+- **Objective**: Add, modify, and delete users.
+- **Commands**:
+  - Add a new user:
+    ```bash
+    sudo adduser username
+    ```
+  - Delete a user:
+    ```bash
+    sudo deluser username
+    ```
+  - Change a user’s password:
+    ```bash
+    sudo passwd username
+    ```
+
+### 3.4 Working with Groups
+- **Objective**: Manage user groups.
+- **Commands**:
+  - List groups:
+    ```bash
+    cat /etc/group
+    ```
+  - Add a group:
+    ```bash
+    sudo groupadd groupname
+    ```
+  - Add a user to a group:
+    ```bash
+    sudo usermod -aG groupname username
+    ```
+
+---
+
+## 4. Setting the Time
+
+### 4.1 Setting Time Zone
+- **Objective**: Configure the system time zone.
+- **Commands**:
+  - List available time zones:
+    ```bash
+    timedatectl list-timezones
+    ```
+  - Set the time zone:
+    ```bash
+    sudo timedatectl set-timezone Region/City
+    ```
+  - Verify the current time and time zone:
+    ```bash
+    timedatectl
+    ```
+
+### 4.2 Synchronizing Time with NTP
+- **Objective**: Sync time using NTP (Network Time Protocol).
+- **Commands**:
+  - Enable and start systemd-timesyncd:
+    ```bash
+    sudo systemctl enable systemd-timesyncd
+    sudo systemctl start systemd-timesyncd
+    ```
+  - Check synchronization status:
+    ```bash
+    timedatectl status
+    ```
+
+---
+
+## 5. Scheduling Tasks
+
+### 5.1 Scheduling Recurring Tasks with cron
+- **Objective**: Automate tasks using cron jobs.
+- **Commands**:
+  - Edit crontab:
+    ```bash
+    crontab -e
+    ```
+  - List current cron jobs:
+    ```bash
+    crontab -l
+    ```
+  - Example cron entry (runs daily at 9:15 AM):
+    ```
+    15 09 * * * /path/to/command
+    ```
+
+### 5.2 Scheduling with systemd Timer Units
+- **Objective**: Schedule tasks with systemd timers.
+- **Commands**:
+  - Create a timer unit:
+    ```bash
+    sudo nano /etc/systemd/system/example.timer
+    ```
+    Example configuration:
+    ```
+    [Unit]
+    Description=Example Timer
+
+    [Timer]
+    OnCalendar=*-*-* *:00
+    Persistent=true
+
+    [Install]
+    WantedBy=timers.target
+    ```
+  - Enable and start the timer:
+    ```bash
+    sudo systemctl enable example.timer
+    sudo systemctl start example.timer
+    ```
+  - Check timer status:
+    ```bash
+    systemctl list-timers
+    ```
+
+---
+
+## 6. Practical Exercises
+
+### Exercise 1: Managing Logs
+1. Check system logs using `journalctl`.
+2. Rotate logs manually using `logrotate`.
+3. Clear old logs using `journalctl --vacuum-time`.
+
+### Exercise 2: User and Group Management
+1. Create a new user and set a password.
+2. Add the user to a new group.
+3. Verify the user’s group memberships.
+
+### Exercise 3: Scheduling Tasks
+1. Schedule a cron job to display a message every hour.
+2. Create a systemd timer that runs a script daily.
